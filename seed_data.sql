@@ -75,8 +75,51 @@ VALUES
     'preserving-weta-statues', 
     'Learn the best practices for cleaning and displaying your high-end Lord of the Rings statues.', 
     '# Maintenance Guide\n\nWeta statues are delicate works of art...\n\n## Dusting\nUse a soft makeup brush to remove dust without scratching the polystone finish.\n\n## Environment\nKeep out of direct sunlight to prevent paint fading over time...', 
-    'https://images.unsplash.com/photo-1531390844884-f93bcad7bc99?q=80&w=1000&auto=format&fit=crop', 
+    'https://images.unsplash.com/photo-1531390844884-f93bcad7bc99?q=80&w=1000&auto=format&fit=crop',
     'Educational', 
     'Published', 
     now()
   );
+
+-- Migration: rename visitor to member
+DO $$
+BEGIN
+  -- 1. Add 'member' to the enum if it is not already there
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_enum
+    WHERE enumlabel = 'member'
+      AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'user_role')
+  ) THEN
+    ALTER TYPE user_role ADD VALUE 'member';
+  END IF;
+END;
+$$;
+
+-- 2. Migrate existing rows: visitor -> member
+UPDATE public.profiles
+SET role = 'member'
+WHERE role = 'visitor';
+
+-- 3. Replace the trigger function so new users get 'member' as default
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, display_name, avatar_url, role)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    NEW.raw_user_meta_data->>'display_name',
+    NEW.raw_user_meta_data->>'avatar_url',
+    'member'
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 4. Note on Enum Cleanup
+-- In PostgreSQL, dropping an enum value that is used in RLS policies or functions 
+-- (like posts_read or get_my_role()) is restricted because those objects depend on the type OID.
+-- To maintain database integrity, we keep 'visitor' in the enum but it is no longer used by the app.
+-- If you strictly want it gone, you would need to drop and recreate all RLS policies.
+
+

@@ -1,15 +1,9 @@
-import React from 'react';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getUserProfile } from '@/lib/auth';
-import { 
-  FileText, 
-  Package, 
-  MessageSquare, 
-  Layout, 
-  Users, 
-  ArrowLeft,
-  LayoutDashboard
-} from 'lucide-react';
+import { LayoutGrid, FileText, Package, Users, MessageSquare, Layers } from 'lucide-react';
+import LogoutButton from '@/components/auth/LogoutButton';
+
 
 export default async function DashboardLayout({
   children,
@@ -18,105 +12,99 @@ export default async function DashboardLayout({
 }) {
   const profile = await getUserProfile();
 
-  if (!profile) return null;
+  // Member or unauthenticated users don't get a dashboard
+  if (!profile || profile.role === 'member') {
+    redirect('/');
+  }
 
   const isAdmin = profile.role === 'admin';
-  const isAuthor = profile.role === 'author' || isAdmin;
-
-  const navLinks = [
-    {
-      title: 'Author',
-      show: isAuthor,
-      links: [
-        { href: '/dashboard/author/posts', label: 'My Posts', icon: FileText },
-        { href: '/dashboard/author/products', label: 'My Products', icon: Package },
-      ]
-    },
-    {
-      title: 'Admin',
-      show: isAdmin,
-      links: [
-        { href: '/dashboard/admin/comments', label: 'Comments', icon: MessageSquare },
-        { href: '/dashboard/admin/content', label: 'Content', icon: Layout },
-        { href: '/dashboard/admin/users', label: 'Users', icon: Users },
-      ]
-    }
-  ];
 
   return (
     <div className="flex min-h-screen bg-white">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-zinc-200 bg-white flex flex-col sticky top-0 h-screen">
-        <div className="p-6">
-          <Link href="/dashboard" className="flex items-center gap-2 mb-8">
-            <span className="text-xl font-bold tracking-tight text-zinc-900">Kwago</span>
-            <span className="text-[10px] bg-zinc-100 text-zinc-500 px-2 py-0.5 rounded-full uppercase font-bold tracking-wider">
-              {profile.role}
-            </span>
-          </Link>
+      {/* ── Sidebar ── */}
+      <aside className="w-56 shrink-0 border-r border-zinc-200 flex flex-col pt-8 pb-6 px-4">
+        {/* Wordmark */}
+        <Link
+          href="/"
+          className="mb-8 px-2 text-xl font-bold tracking-tight text-zinc-900"
+        >
+          Kwago
+        </Link>
 
-          <nav className="space-y-8">
-            <div>
-              <Link 
-                href="/" 
-                className="flex items-center gap-3 px-4 py-2 rounded-full text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-[#0066FF] transition-colors"
-              >
-                <ArrowLeft size={18} />
-                <span>Back to site</span>
-              </Link>
-              <Link 
-                href="/dashboard" 
-                className="flex items-center gap-3 px-4 py-2 mt-1 rounded-full text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-[#0066FF] transition-colors"
-              >
-                <LayoutDashboard size={18} />
-                <span>Dashboard Home</span>
-              </Link>
-            </div>
+        {/* Role badge */}
+        <span className="mb-6 px-2">
+          <span className="inline-block rounded-full border border-zinc-200 px-3 py-0.5 text-xs font-medium text-zinc-500 capitalize">
+            {profile.role}
+          </span>
+        </span>
 
-            {navLinks.map((section, idx) => section.show && (
-              <div key={idx} className="space-y-2">
-                <h3 className="px-4 text-[11px] font-bold uppercase tracking-widest text-zinc-400">
-                  {section.title}
-                </h3>
-                <div className="space-y-1">
-                  {section.links.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="flex items-center gap-3 px-4 py-2 rounded-full text-sm font-medium text-zinc-600 hover:bg-zinc-50 hover:text-[#0066FF] transition-colors"
-                    >
-                      <link.icon size={18} />
-                      <span>{link.label}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </nav>
-        </div>
+        <nav className="flex flex-col gap-1 flex-1">
+          {/* Author + Admin links */}
+          <p className="px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
+            Content
+          </p>
 
-        {/* User Info Footer */}
-        <div className="mt-auto p-6 border-t border-zinc-100">
-          <div className="flex items-center gap-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center text-xs font-bold text-zinc-500">
-              {profile.display_name?.[0]?.toUpperCase() ?? profile.email[0].toUpperCase()}
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-sm font-bold text-zinc-900 truncate">
-                {profile.display_name || 'Collector'}
-              </span>
-              <span className="text-[11px] text-zinc-500 truncate">{profile.email}</span>
-            </div>
-          </div>
+          <SidebarLink href="/dashboard/author/posts" icon={<FileText size={15} />}>
+            My Posts
+          </SidebarLink>
+          <SidebarLink href="/dashboard/author/products" icon={<Package size={15} />}>
+            My Products
+          </SidebarLink>
+
+          {/* Admin-only links */}
+          {isAdmin && (
+            <>
+              <p className="px-2 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
+                Admin
+              </p>
+              <SidebarLink href="/dashboard/admin" icon={<LayoutGrid size={15} />}>
+                Overview
+              </SidebarLink>
+              <SidebarLink href="/dashboard/admin/comments" icon={<MessageSquare size={15} />}>
+                Comments
+              </SidebarLink>
+              <SidebarLink href="/dashboard/admin/content" icon={<Layers size={15} />}>
+                Content
+              </SidebarLink>
+              <SidebarLink href="/dashboard/admin/users" icon={<Users size={15} />}>
+                Users
+              </SidebarLink>
+            </>
+          )}
+        </nav>
+
+        {/* Logout */}
+        <div className="mt-auto pt-4 border-t border-zinc-100">
+          <LogoutButton className="mt-0" />
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 bg-zinc-50/30">
-        <div className="p-12 max-w-5xl">
-          {children}
-        </div>
+
+      {/* ── Main content ── */}
+      <main className="flex-1 p-8 min-w-0">
+        {children}
       </main>
     </div>
+  );
+}
+
+// ── Reusable sidebar nav link ──────────────────────────────────────────────
+function SidebarLink({
+  href,
+  icon,
+  children,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-2.5 rounded-full px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+    >
+      <span className="text-zinc-400">{icon}</span>
+      {children}
+    </Link>
   );
 }

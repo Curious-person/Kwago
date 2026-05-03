@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/Button';
 
 type ViewState = 'form' | 'check-email';
 
@@ -72,16 +73,14 @@ export default function RegisterPage() {
           Click it to activate your account.
         </p>
 
-        <Link
-          href="/login"
-          className="
-            mt-8 inline-block rounded-full border border-zinc-200
-            px-6 py-3 text-sm font-medium text-zinc-700
-            transition-colors hover:border-zinc-300 hover:bg-zinc-50
-          "
+        <Button
+          variant="outline"
+          onClick={() => window.location.href = '/login'}
+          size="lg"
+          className="mt-8"
         >
           Back to sign in
-        </Link>
+        </Button>
       </div>
     );
   }
@@ -188,17 +187,14 @@ export default function RegisterPage() {
         </div>
 
         {/* Submit */}
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="
-            mt-2 w-full rounded-full bg-[#0066FF] px-6 py-3
-            text-sm font-semibold text-white transition-opacity
-            hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed
-          "
+          size="lg"
+          className="mt-2 w-full"
         >
           {loading ? 'Creating account…' : 'Create account'}
-        </button>
+        </Button>
       </form>
 
       {/* Footer link */}

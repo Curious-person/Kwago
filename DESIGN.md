@@ -11,7 +11,10 @@ The UI follows a **"Clarity over Complexity"** approach:
   - `Text`: High contrast zinc-900 for headings, zinc-500 for body text.
 - **Spacing**: Follows an 8px grid system with large gutters to provide visual "breathing room."
 - **Components**: Rounded-full (pill-shaped) buttons and inputs to soften the layout.
-- **Shadows**: Explicitly **zero shadows**. The design relies on flat backgrounds and subtle borders for separation.
+- **Shadows**: Primarily **zero shadows**. However, interactive buttons use a **solid 3D block shadow** (cartoon style) to provide depth and interaction feedback without breaking the minimalist aesthetic.
+- **Animations**:
+  - **Scroll Reveal**: Elements use a "fade-in-up" entrance animation as they enter the viewport to create a dynamic reading experience.
+  - **Inertial Scrolling**: Pages implement a momentum-based smooth scroll (via Lenis) for a premium, high-end feel with a "gradual stop" deceleration.
 
 ---
 

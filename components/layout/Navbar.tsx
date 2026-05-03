@@ -2,11 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Search } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Search, LayoutDashboard, User } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { cn } from '@/lib/utils';
+import { useJournalStore } from '@/lib/store';
 
 const NavbarItems = [
   {
@@ -29,6 +30,10 @@ const NavbarItems = [
 
 export const Navbar = () => {
   const pathname = usePathname();
+  const router = useRouter();
+  const { profile, role } = useJournalStore();
+
+  const isManagement = role === 'admin' || role === 'author';
 
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-white border-b border-zinc-100">
@@ -63,7 +68,20 @@ export const Navbar = () => {
             icon={<Search size={16} />}
           />
         </div>
-        <Button>Sign In</Button>
+        {profile ? (
+          <Button 
+            variant="secondary"
+            onClick={() => router.push('/dashboard')}
+            className="gap-2"
+          >
+            {isManagement ? <LayoutDashboard size={16} /> : <User size={16} />}
+            <span>{isManagement ? 'Dashboard' : 'Account'}</span>
+          </Button>
+        ) : (
+          <Button onClick={() => router.push(`/login?next=${pathname}`)}>
+            Sign In
+          </Button>
+        )}
       </div>
     </nav>
   );

@@ -56,28 +56,32 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // 2. Role-protected routes — only check when path is under admin or author
+  // 2. Fetch role once — needed for both member gate and route checks
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const role = (profile?.role ?? null) as UserRole | null
+
+  // 3. Members have no dashboard — redirect to home
+  if (role === 'member' || role === null) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // 4. Role-protected sub-routes
   const isAdminRoute = pathname.startsWith('/dashboard/admin')
   const isAuthorRoute = pathname.startsWith('/dashboard/author')
 
-  if (isAdminRoute || isAuthorRoute) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+  // /dashboard/admin/* — admin only
+  if (isAdminRoute && role !== 'admin') {
+    return NextResponse.redirect(new URL('/unauthorized', request.url))
+  }
 
-    const role = (profile?.role ?? null) as UserRole | null
-
-    // /dashboard/admin/* — admin only
-    if (isAdminRoute && role !== 'admin') {
-      return NextResponse.redirect(new URL('/unauthorized', request.url))
-    }
-
-    // /dashboard/author/* — author or admin
-    if (isAuthorRoute && role !== 'author' && role !== 'admin') {
-      return NextResponse.redirect(new URL('/unauthorized', request.url))
-    }
+  // /dashboard/author/* — author or admin
+  if (isAuthorRoute && role !== 'author' && role !== 'admin') {
+    return NextResponse.redirect(new URL('/unauthorized', request.url))
   }
 
   return response

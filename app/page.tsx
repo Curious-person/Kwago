@@ -1,4 +1,5 @@
 import React from 'react';
+import { redirect } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { Newsletter } from '@/components/layout/Newsletter';
@@ -6,6 +7,7 @@ import { HeroPost } from '@/components/blog/HeroPost';
 import { CategoryFilter } from '@/components/blog/CategoryFilter';
 import { PostCard } from '@/components/blog/PostCard';
 import { Button } from '@/components/ui/Button';
+import { getUserRole } from '@/lib/auth';
 
 const POSTS = [
   {
@@ -52,36 +54,61 @@ const POSTS = [
   }
 ];
 
-export default function Home() {
+import { SmoothScroll } from '@/components/ui/SmoothScroll';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
+
+export default async function Home() {
+  const role = await getUserRole();
+
+  if (role === 'admin') {
+    redirect('/dashboard/admin');
+  }
+
+  if (role === 'author') {
+    redirect('/dashboard/author/posts');
+  }
+
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <Navbar />
-      
-      <main className="flex-1 max-w-7xl mx-auto w-full pb-20">
-        {/* Hero Section */}
-        <HeroPost />
+    <SmoothScroll>
+      <div className="min-h-screen bg-white flex flex-col">
+        <Navbar />
         
-        {/* Category Filter */}
-        <CategoryFilter />
-        
-        {/* Post Grid */}
-        <section className="px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-            {POSTS.map((post, idx) => (
-              <PostCard key={idx} {...post} />
-            ))}
-          </div>
+        <main className="flex-1 max-w-7xl mx-auto w-full pb-20">
+          {/* Hero Section */}
+          <ScrollReveal>
+            <HeroPost />
+          </ScrollReveal>
           
-          <div className="flex justify-center mt-20">
-            <Button variant="outline" className="px-10">Load More Articles</Button>
-          </div>
-        </section>
+          {/* Category Filter */}
+          <ScrollReveal delay={100}>
+            <CategoryFilter />
+          </ScrollReveal>
+          
+          {/* Post Grid */}
+          <section className="px-8 py-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+              {POSTS.map((post, idx) => (
+                <ScrollReveal key={idx} delay={idx * 50}>
+                  <PostCard {...post} />
+                </ScrollReveal>
+              ))}
+            </div>
+            
+            <ScrollReveal>
+              <div className="flex justify-center mt-20">
+                <Button variant="outline" className="px-10">Load More Articles</Button>
+              </div>
+            </ScrollReveal>
+          </section>
+          
+          {/* Newsletter Section */}
+          <ScrollReveal>
+            <Newsletter />
+          </ScrollReveal>
+        </main>
         
-        {/* Newsletter Section */}
-        <Newsletter />
-      </main>
-      
-      <Footer />
-    </div>
+        <Footer />
+      </div>
+    </SmoothScroll>
   );
 }

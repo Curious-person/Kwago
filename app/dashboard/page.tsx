@@ -12,7 +12,6 @@ export default async function DashboardPage() {
     redirect('/dashboard/author/posts');
   }
 
-  // Visitors or unauthenticated users shouldn't have reached here due to middleware,
-  // but we redirect them just in case.
-  redirect('/unauthorized');
+  // member or unauthenticated → home
+  redirect('/');
 }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,9 +30,39 @@ export default function LoginPage() {
       return;
     }
 
-    router.push('/dashboard');
-    router.refresh();
+    // Fetch the user's profile to determine role-based redirect
+    const { data: { user } } = await supabase.auth.getUser();
+    let destination = '/';
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.role === 'admin') {
+        destination = '/dashboard/admin';
+      } else if (profile?.role === 'author') {
+        destination = '/dashboard/author/posts';
+      } else {
+        // member or unknown → home
+        destination = '/';
+      }
+    }
+
+    // Allow explicit ?next= param to override (e.g. deep-linked pages)
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get('next');
+    if (next && next.startsWith('/') && !next.startsWith('/dashboard')) {
+      destination = next;
+    }
+
+    // Use hard redirect for auth transitions to ensure clean state and correct RBAC hydration
+    window.location.href = destination;
   }
+
+
 
   return (
     <div className="w-full max-w-md">
@@ -109,17 +140,14 @@ export default function LoginPage() {
         </div>
 
         {/* Submit */}
-        <button
+        <Button
           type="submit"
           disabled={loading}
-          className="
-            mt-2 w-full rounded-full bg-[#0066FF] px-6 py-3
-            text-sm font-semibold text-white transition-opacity
-            hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed
-          "
+          size="lg"
+          className="mt-2 w-full"
         >
           {loading ? 'Signing in…' : 'Sign in'}
-        </button>
+        </Button>
       </form>
 
       {/* Footer link */}

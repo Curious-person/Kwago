@@ -2,7 +2,7 @@
 // RBAC
 // ----------------------------------------------------------------
 
-export type UserRole = 'visitor' | 'author' | 'admin';
+export type UserRole = 'member' | 'author' | 'admin';
 
 export type PostStatus = 'draft' | 'published' | 'archived';
 

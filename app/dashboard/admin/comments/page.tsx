@@ -5,13 +5,13 @@ export default async function AdminCommentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900">Moderate Comments</h1>
-        <p className="text-zinc-500 font-medium">Review and manage community discussions.</p>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Comments</h1>
+        <p className="text-sm text-zinc-500">Moderate pending and approved comments.</p>
       </div>
-      
-      <div className="p-8 border border-zinc-200 rounded-3xl bg-white">
-        <p className="text-sm text-zinc-400 font-medium italic">Coming soon</p>
+
+      <div className="rounded-3xl border border-zinc-200 px-8 py-16 text-center">
+        <p className="text-sm font-medium text-zinc-400">Coming soon</p>
       </div>
     </div>
   );
