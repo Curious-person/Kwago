@@ -4,6 +4,7 @@ import { getUserProfile } from '@/lib/auth';
 import { LayoutGrid, FileText, Package, Users, MessageSquare, Layers } from 'lucide-react';
 import LogoutButton from '@/components/auth/LogoutButton';
 
+import { SidebarLink } from '@/components/dashboard/SidebarLink';
 
 export default async function DashboardLayout({
   children,
@@ -85,26 +86,5 @@ export default async function DashboardLayout({
         {children}
       </main>
     </div>
-  );
-}
-
-// ── Reusable sidebar nav link ──────────────────────────────────────────────
-function SidebarLink({
-  href,
-  icon,
-  children,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-2.5 rounded-full px-3 py-2 text-sm text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
-    >
-      <span className="text-zinc-400">{icon}</span>
-      {children}
-    </Link>
   );
 }
