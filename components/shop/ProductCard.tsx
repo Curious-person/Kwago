@@ -8,11 +8,12 @@ import { Product } from '@/types/product';
 
 interface ProductCardProps {
   product: Product;
+  onViewDetails?: (product: Product) => void;
 }
 
-export const ProductCard = ({ product }: ProductCardProps) => {
+export const ProductCard = ({ product, onViewDetails }: ProductCardProps) => {
   return (
-    <div className="group flex flex-col bg-white">
+    <div className="group flex flex-col bg-white h-full">
       <div className="relative aspect-square rounded-3xl overflow-hidden mb-6 bg-zinc-50 border border-zinc-100">
         <Image 
           src={product.image} 
@@ -34,7 +35,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">
           {product.category}
         </p>
-        <h3 className="text-xl font-bold text-zinc-900 mb-2 leading-tight group-hover:text-[#0066FF] transition-colors">
+        <h3 className="text-xl font-bold text-zinc-900 mb-2 leading-tight group-hover:text-[#0066FF] transition-colors line-clamp-2 min-h-[3.5rem]">
           {product.name}
         </h3>
         <p className="text-lg font-medium text-zinc-900 mb-6">
@@ -42,7 +43,11 @@ export const ProductCard = ({ product }: ProductCardProps) => {
         </p>
         
         <div className="mt-auto">
-          <Button variant="outline" className="w-full">
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => onViewDetails?.(product)}
+          >
             View Details
           </Button>
         </div>

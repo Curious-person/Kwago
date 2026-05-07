@@ -3,11 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, LayoutDashboard, User } from 'lucide-react';
+import { Search, User, LogOut } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { cn } from '@/lib/utils';
 import { useJournalStore } from '@/lib/store';
+import { createClient } from '@/lib/supabase/client';
 
 const NavbarItems = [
   {
@@ -31,9 +32,17 @@ const NavbarItems = [
 export const Navbar = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const { profile, role } = useJournalStore();
+  const { profile, role, clearAuth } = useJournalStore();
 
   const isManagement = role === 'admin' || role === 'author';
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    clearAuth();
+    router.push('/');
+    router.refresh();
+  };
 
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-white border-b border-zinc-100">
@@ -71,11 +80,17 @@ export const Navbar = () => {
         {profile ? (
           <Button 
             variant="secondary"
-            onClick={() => router.push('/dashboard')}
+            onClick={() => {
+              if (isManagement) {
+                router.push(role === 'admin' ? '/dashboard/admin' : '/dashboard/author/posts');
+              } else {
+                handleLogout();
+              }
+            }}
             className="gap-2"
           >
-            {isManagement ? <LayoutDashboard size={16} /> : <User size={16} />}
-            <span>{isManagement ? 'Dashboard' : 'Account'}</span>
+            {isManagement ? <User size={16} /> : <LogOut size={16} />}
+            <span>{isManagement ? 'Account' : 'Log Out'}</span>
           </Button>
         ) : (
           <Button onClick={() => router.push(`/login?next=${pathname}`)}>

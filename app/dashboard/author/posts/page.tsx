@@ -17,6 +17,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -41,7 +42,7 @@ const INITIAL_POSTS = [
     title: "The Art of Intentional Digital Consumption",
     category: "Design",
     date: "Oct 24, 2024",
-    image: "https://images.unsplash.com/photo-1544391682-177d4c9d3ddb?q=80&w=1200&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=800&auto=format&fit=crop",
     author: "Elena Vance",
     status: "Published"
   },
@@ -85,8 +86,8 @@ export default function AuthorPostsPage() {
 
       <div className="flex items-center gap-4">
         <div className="w-full max-w-sm">
-          <Input 
-            placeholder="Search posts..." 
+          <Input
+            placeholder="Search posts..."
             icon={<Search size={16} />}
           />
         </div>
@@ -109,10 +110,10 @@ export default function AuthorPostsPage() {
               <TableRow key={post.id} className="hover:bg-zinc-50/50 border-zinc-100 transition-colors">
                 <TableCell>
                   <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-zinc-100 border border-zinc-200">
-                    <Image 
-                      src={post.image} 
-                      alt={post.title} 
-                      fill 
+                    <Image
+                      src={post.image}
+                      alt={post.title}
+                      fill
                       className="object-cover"
                     />
                   </div>
@@ -147,19 +148,21 @@ export default function AuthorPostsPage() {
                       <MoreHorizontal size={16} className="text-zinc-400" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="rounded-2xl w-48 p-2">
-                      <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">Options</DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-zinc-100" />
-                      <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer">
-                        <Eye size={14} className="text-zinc-400" />
-                        <span className="font-medium">View Post</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        className="gap-2 px-3 py-2 rounded-xl cursor-pointer"
-                        onClick={() => router.push(`/dashboard/author/posts/${post.id}/edit`)}
-                      >
-                        <Edit size={14} className="text-zinc-400" />
-                        <span className="font-medium">Edit Content</span>
-                      </DropdownMenuItem>
+                      <DropdownMenuGroup>
+                        <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">Options</DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-zinc-100" />
+                        <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer">
+                          <Eye size={14} className="text-zinc-400" />
+                          <span className="font-medium">View Post</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="gap-2 px-3 py-2 rounded-xl cursor-pointer"
+                          onClick={() => router.push(`/dashboard/author/posts/${post.id}/edit`)}
+                        >
+                          <Edit size={14} className="text-zinc-400" />
+                          <span className="font-medium">Edit Content</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
                       <DropdownMenuSeparator className="bg-zinc-100" />
                       <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer text-red-500 hover:text-red-600 hover:bg-red-50 focus:bg-red-50">
                         <Trash2 size={14} />
