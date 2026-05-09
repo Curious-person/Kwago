@@ -163,32 +163,40 @@ export function DataTable<T>({ columns, data, itemsPerPage = 5 }: DataTableProps
 
       {/* Pagination Footer */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-2">
-          <p className="text-xs text-zinc-500 font-medium">
-            Showing <span className="font-bold text-zinc-900">{((currentPage - 1) * itemsPerPage) + 1}</span> to <span className="font-bold text-zinc-900">{Math.min(currentPage * itemsPerPage, sortedData.length)}</span> of <span className="font-bold text-zinc-900">{sortedData.length}</span> results
-          </p>
+        <div className="flex items-center justify-center py-8">
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 rounded-full border-zinc-200 text-zinc-500 hover:text-zinc-900"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft size={14} />
-            </Button>
-            <div className="text-xs font-bold text-zinc-700 px-2">
-              Page {currentPage} of {totalPages}
-            </div>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8 rounded-full border-zinc-200 text-zinc-500 hover:text-zinc-900"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight size={14} />
-            </Button>
+            {currentPage > 1 && (
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className="text-zinc-900 hover:opacity-70 transition-opacity p-2"
+              >
+                <ChevronLeft size={20} strokeWidth={2} />
+              </button>
+            )}
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={cn(
+                  "flex items-center justify-center w-10 h-10 text-[15px] font-medium transition-colors",
+                  currentPage === page 
+                    ? "bg-[#0066FF] text-white rounded-2xl" 
+                    : "text-zinc-900 hover:text-zinc-600"
+                )}
+              >
+                {page}
+              </button>
+            ))}
+
+            {currentPage < totalPages && (
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className="text-zinc-900 hover:opacity-70 transition-opacity p-2 ml-1"
+              >
+                <ChevronRight size={20} strokeWidth={2} />
+              </button>
+            )}
           </div>
         </div>
       )}

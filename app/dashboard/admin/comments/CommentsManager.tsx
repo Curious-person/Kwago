@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { DataTable, ColumnDef } from '@/components/ui/data-table';
 import { 
   MessageSquare, 
@@ -20,7 +21,9 @@ import {
   ArrowLeft, 
   MoreHorizontal,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Search,
+  Filter
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -113,9 +116,20 @@ const MOCK_DATA: Post[] = [
     category: "Lifestyle",
     date: "Oct 05, 2024",
     image: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=800&auto=format&fit=crop",
-    author: "Elena Vance",
+    author: "Marcus Webb",
     totalComments: 9,
     flaggedComments: 3,
+    comments: []
+  },
+  {
+    id: "p7",
+    title: "Minimalism in Motion",
+    category: "Design",
+    date: "Oct 01, 2024",
+    image: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=800&auto=format&fit=crop",
+    author: "Marcus Webb",
+    totalComments: 5,
+    flaggedComments: 0,
     comments: []
   }
 ];
@@ -124,6 +138,17 @@ export function CommentsManager() {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [flaggingCommentId, setFlaggingCommentId] = useState<string | null>(null);
   const [flagReason, setFlagReason] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [authorFilter, setAuthorFilter] = useState("all");
+
+  const authors = Array.from(new Set(MOCK_DATA.map(p => p.author)));
+
+  const filteredPosts = MOCK_DATA.filter(post => {
+    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         post.author.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesAuthor = authorFilter === "all" || post.author === authorFilter;
+    return matchesSearch && matchesAuthor;
+  });
 
   const handlePostClick = (post: Post) => {
     setSelectedPost(post);
@@ -346,6 +371,35 @@ export function CommentsManager() {
   ];
 
   return (
-    <DataTable columns={postColumns} data={MOCK_DATA} itemsPerPage={5} />
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4 flex-1 max-w-2xl">
+          <div className="w-full max-w-sm">
+            <Input
+              placeholder="Search posts..."
+              icon={<Search size={16} />}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          <div className="relative">
+            <select 
+              className="appearance-none bg-white border border-zinc-200 rounded-full pl-10 pr-8 py-2.5 text-sm font-medium text-zinc-600 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent transition-all cursor-pointer"
+              value={authorFilter}
+              onChange={(e) => setAuthorFilter(e.target.value)}
+            >
+              <option value="all">All Authors</option>
+              {authors.map(author => (
+                <option key={author} value={author}>{author}</option>
+              ))}
+            </select>
+            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+          </div>
+        </div>
+      </div>
+
+      <DataTable columns={postColumns} data={filteredPosts} itemsPerPage={5} />
+    </div>
   );
 }
