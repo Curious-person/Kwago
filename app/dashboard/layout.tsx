@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getUserProfile } from '@/lib/auth';
-import { LayoutGrid, FileText, Package, Users, MessageSquare, Layers } from 'lucide-react';
+import { LayoutGrid, FileText, Package, Users, MessageSquare, Layers, ShoppingBag } from 'lucide-react';
 import LogoutButton from '@/components/auth/LogoutButton';
 
 import { SidebarLink } from '@/components/dashboard/SidebarLink';
@@ -19,6 +19,7 @@ export default async function DashboardLayout({
   }
 
   const isAdmin = profile.role === 'admin';
+  const isAuthor = profile.role === 'author';
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -40,24 +41,24 @@ export default async function DashboardLayout({
         </span>
 
         <nav className="flex flex-col gap-1 flex-1">
-          {/* Author + Admin links */}
-          <p className="px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
-            Content
-          </p>
-
-          <SidebarLink href="/dashboard/author/posts" icon={<FileText size={15} />}>
-            My Posts
-          </SidebarLink>
-          <SidebarLink href="/dashboard/author/products" icon={<Package size={15} />}>
-            My Products
-          </SidebarLink>
+          {/* Author links */}
+          {isAuthor && (
+            <>
+              <SidebarLink href="/dashboard/author/posts" icon={<FileText size={15} />}>
+                My Posts
+              </SidebarLink>
+              <SidebarLink href="/dashboard/author/products" icon={<Package size={15} />}>
+                My Products
+              </SidebarLink>
+              <SidebarLink href="/dashboard/author/sales" icon={<ShoppingBag size={15} />}>
+                My Sales
+              </SidebarLink>
+            </>
+          )}
 
           {/* Admin-only links */}
           {isAdmin && (
             <>
-              <p className="px-2 pb-1 pt-4 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
-                Admin
-              </p>
               <SidebarLink href="/dashboard/admin" icon={<LayoutGrid size={15} />}>
                 Overview
               </SidebarLink>

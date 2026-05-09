@@ -66,9 +66,99 @@ const INITIAL_POSTS = [
   }
 ];
 
+import { DataTable, ColumnDef } from '@/components/ui/data-table';
+
 export default function AuthorPostsPage() {
   const router = useRouter();
   const [posts] = useState(INITIAL_POSTS);
+
+  const columns = React.useMemo<ColumnDef<typeof INITIAL_POSTS[0]>[]>(() => [
+    {
+      header: 'Photo',
+      accessorKey: 'image',
+      headerClassName: 'w-[100px]',
+      cell: (row) => (
+        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-zinc-100 border border-zinc-200">
+          <Image src={row.image} alt={row.title} fill className="object-cover" />
+        </div>
+      ),
+    },
+    {
+      header: 'Post Details',
+      filterable: true,
+      filterValue: (row) => `${row.title} ${row.author}`,
+      cell: (row) => (
+        <div className="flex flex-col gap-0.5">
+          <span className="font-bold text-zinc-900 line-clamp-1">{row.title}</span>
+          <span className="text-xs text-zinc-400">by {row.author}</span>
+        </div>
+      ),
+    },
+    {
+      header: 'Category',
+      accessorKey: 'category',
+      filterable: true,
+      cell: (row) => (
+        <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
+          {row.category}
+        </Badge>
+      ),
+    },
+    {
+      header: 'Date',
+      accessorKey: 'date',
+      cell: (row) => <span className="text-zinc-500 text-sm font-medium">{row.date}</span>,
+    },
+    {
+      header: 'Status',
+      accessorKey: 'status',
+      filterable: true,
+      cell: (row) => (
+        <div className="flex items-center gap-1.5">
+          <div className={`w-1.5 h-1.5 rounded-full ${row.status === 'Published' ? 'bg-[#0066FF]' : 'bg-zinc-300'}`} />
+          <span className={`text-xs font-bold ${row.status === 'Published' ? 'text-zinc-900' : 'text-zinc-400'}`}>
+            {row.status}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: 'Actions',
+      className: 'text-right',
+      headerClassName: 'text-right',
+      cell: (row) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger render={
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-zinc-100" />
+          }>
+            <MoreHorizontal size={16} className="text-zinc-400" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="rounded-2xl w-48 p-2">
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">Options</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-zinc-100" />
+              <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer">
+                <Eye size={14} className="text-zinc-400" />
+                <span className="font-medium">View Post</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="gap-2 px-3 py-2 rounded-xl cursor-pointer"
+                onClick={() => router.push(`/dashboard/author/posts/${row.id}/edit`)}
+              >
+                <Edit size={14} className="text-zinc-400" />
+                <span className="font-medium">Edit Content</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator className="bg-zinc-100" />
+            <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer text-red-500 hover:text-red-600 hover:bg-red-50 focus:bg-red-50">
+              <Trash2 size={14} />
+              <span className="font-medium">Delete Post</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ], [router]);
 
   return (
     <div className="space-y-8">
@@ -93,89 +183,7 @@ export default function AuthorPostsPage() {
         </div>
       </div>
 
-      <div className="rounded-3xl border border-zinc-100 overflow-hidden bg-white shadow-none">
-        <Table>
-          <TableHeader className="bg-zinc-50/50">
-            <TableRow className="hover:bg-transparent border-zinc-100">
-              <TableHead className="w-[100px] text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Photo</TableHead>
-              <TableHead className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Post Details</TableHead>
-              <TableHead className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Category</TableHead>
-              <TableHead className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Date</TableHead>
-              <TableHead className="text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Status</TableHead>
-              <TableHead className="text-right text-zinc-400 font-bold uppercase tracking-widest text-[10px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {posts.map((post) => (
-              <TableRow key={post.id} className="hover:bg-zinc-50/50 border-zinc-100 transition-colors">
-                <TableCell>
-                  <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-zinc-100 border border-zinc-200">
-                    <Image
-                      src={post.image}
-                      alt={post.title}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-bold text-zinc-900 line-clamp-1">{post.title}</span>
-                    <span className="text-xs text-zinc-400">by {post.author}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
-                    {post.category}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-zinc-500 text-sm font-medium">
-                  {post.date}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1.5">
-                    <div className={`w-1.5 h-1.5 rounded-full ${post.status === 'Published' ? 'bg-[#0066FF]' : 'bg-zinc-300'}`} />
-                    <span className={`text-xs font-bold ${post.status === 'Published' ? 'text-zinc-900' : 'text-zinc-400'}`}>
-                      {post.status}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger render={
-                      <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-zinc-100" />
-                    }>
-                      <MoreHorizontal size={16} className="text-zinc-400" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="rounded-2xl w-48 p-2">
-                      <DropdownMenuGroup>
-                        <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">Options</DropdownMenuLabel>
-                        <DropdownMenuSeparator className="bg-zinc-100" />
-                        <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer">
-                          <Eye size={14} className="text-zinc-400" />
-                          <span className="font-medium">View Post</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="gap-2 px-3 py-2 rounded-xl cursor-pointer"
-                          onClick={() => router.push(`/dashboard/author/posts/${post.id}/edit`)}
-                        >
-                          <Edit size={14} className="text-zinc-400" />
-                          <span className="font-medium">Edit Content</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                      <DropdownMenuSeparator className="bg-zinc-100" />
-                      <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer text-red-500 hover:text-red-600 hover:bg-red-50 focus:bg-red-50">
-                        <Trash2 size={14} />
-                        <span className="font-medium">Delete Post</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable columns={columns} data={posts} itemsPerPage={5} />
     </div>
   );
 }
