@@ -14,6 +14,7 @@ export interface Profile {
   display_name: string | null;
   avatar_url: string | null;
   role: UserRole;
+  status: 'active' | 'suspended';
   created_at: string;
   updated_at: string;
 }

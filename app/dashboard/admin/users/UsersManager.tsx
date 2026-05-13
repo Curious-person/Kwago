@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DataTable, ColumnDef } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -15,23 +15,25 @@ import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { ShieldCheck, ShieldMinus, UserX, UserCheck, Users, Pen, AlertTriangle, Search } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { cn } from '@/lib/utils';
+import {
+  getUsersAction,
+  promoteUserAction,
+  demoteUserAction,
+  suspendUserAction,
+  reactivateUserAction,
+} from './actions';
+import type {
+  User,
+  UserQueryFilters,
+  PaginationParams,
+  ErrorResponse,
+} from '@/lib/services/userService';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type UserRole = 'member' | 'author';
 type UserStatus = 'active' | 'suspended';
 type ActionType = 'promote' | 'demote' | 'suspend' | 'reactivate';
-
-interface User {
-  id: string;
-  display_name: string;
-  email: string;
-  avatar_url: string | null;
-  role: UserRole;
-  status: UserStatus;
-  created_at: string;
-  posts_count?: number;
-}
 
 interface PendingAction {
   type: ActionType;
@@ -44,7 +46,7 @@ const ACTION_CONFIG: Record<
   ActionType,
   {
     title: string;
-    description: (name: string) => string;
+    description: (name: string | null) => string;
     confirmLabel: string;
     confirmClass: string;
   }
@@ -52,51 +54,44 @@ const ACTION_CONFIG: Record<
   promote: {
     title: 'Promote to Author',
     description: (name) =>
-      `${name} will gain the ability to publish blog posts and manage their own content. This can be undone at any time.`,
+      `${name || 'This user'} will gain the ability to publish blog posts and manage their own content. This can be undone at any time.`,
     confirmLabel: 'Yes, Promote',
     confirmClass: 'bg-[#0066FF] text-white hover:bg-[#0052CC]',
   },
   demote: {
     title: 'Demote to Member',
     description: (name) =>
-      `${name} will lose author privileges and can no longer publish or edit posts. Their existing posts will remain intact.`,
+      `${name || 'This user'} will lose author privileges and can no longer publish or edit posts. Their existing posts will remain intact.`,
     confirmLabel: 'Yes, Demote',
     confirmClass: 'bg-amber-500 text-white hover:bg-amber-600',
   },
   suspend: {
     title: 'Suspend Account',
     description: (name) =>
-      `${name}'s account will be suspended. They will not be able to log in or interact with the platform until reactivated.`,
+      `${name || 'This user'}'s account will be suspended. They will not be able to log in or interact with the platform until reactivated.`,
     confirmLabel: 'Yes, Suspend',
     confirmClass: 'bg-red-500 text-white hover:bg-red-600',
   },
   reactivate: {
     title: 'Reactivate Account',
     description: (name) =>
-      `${name}'s account will be reactivated and they will regain full access to the platform.`,
+      `${name || 'This user'}'s account will be reactivated and they will regain full access to the platform.`,
     confirmLabel: 'Yes, Reactivate',
     confirmClass: 'bg-[#0066FF] text-white hover:bg-[#0052CC]',
   },
 };
 
-// ─── Static Mock Data ─────────────────────────────────────────────────────────
 
-const INITIAL_USERS: User[] = [
-  { id: 'u1', display_name: 'Alex Rivera', email: 'alex.rivera@gmail.com', avatar_url: null, role: 'member', status: 'active', created_at: '2024-10-01T08:00:00Z' },
-  { id: 'u2', display_name: 'Jamie Chen', email: 'jamie.chen@outlook.com', avatar_url: null, role: 'member', status: 'active', created_at: '2024-10-05T14:20:00Z' },
-  { id: 'u3', display_name: 'Morgan Liu', email: 'morganl@proton.me', avatar_url: null, role: 'member', status: 'suspended', created_at: '2024-09-18T09:45:00Z' },
-  { id: 'u4', display_name: 'Sam Nakamura', email: 'sam.naka@yahoo.com', avatar_url: null, role: 'member', status: 'active', created_at: '2024-10-12T11:30:00Z' },
-  { id: 'u5', display_name: 'Riley Torres', email: 'rileyt@icloud.com', avatar_url: null, role: 'member', status: 'active', created_at: '2024-10-19T16:00:00Z' },
-  { id: 'u6', display_name: 'Casey Park', email: 'caseylp@gmail.com', avatar_url: null, role: 'member', status: 'active', created_at: '2024-11-02T10:10:00Z' },
-  { id: 'u7', display_name: 'Elena Vance', email: 'elena.vance@kwago.com', avatar_url: null, role: 'author', status: 'active', created_at: '2024-08-14T07:00:00Z', posts_count: 12 },
-  { id: 'u8', display_name: 'Marcus Webb', email: 'marcus.webb@kwago.com', avatar_url: null, role: 'author', status: 'active', created_at: '2024-09-01T09:30:00Z', posts_count: 7 },
-  { id: 'u9', display_name: 'Priya Sharma', email: 'priya.s@kwago.com', avatar_url: null, role: 'author', status: 'suspended', created_at: '2024-09-22T13:00:00Z', posts_count: 3 },
-];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function UserAvatar({ name }: { name: string }) {
-  const initials = name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase();
+function UserAvatar({ name }: { name: string | null }) {
+  const initials = (name || 'U')
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
   return (
     <div className="flex items-center justify-center w-9 h-9 rounded-full bg-zinc-100 text-zinc-600 text-xs font-bold shrink-0 select-none">
       {initials}
@@ -117,18 +112,67 @@ function StatusBadge({ status }: { status: UserStatus }) {
 type ActiveTab = 'members' | 'authors';
 
 export function UsersManager() {
-  const [users, setUsers] = useState<User[]>(INITIAL_USERS);
+  // ── State Management ──
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ErrorResponse | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>('members');
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<UserQueryFilters>({});
+  const [pagination, setPagination] = useState<PaginationParams>({ page: 1, limit: 10 });
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 
-  const filteredUsers = users.filter((u) =>
-    u.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // ── Initial Data Fetch ──
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setLoading(true);
+      setError(null);
+
+      const queryFilters: UserQueryFilters = {
+        ...filters,
+        sortOrder,
+      };
+
+      console.log('[UsersManager] Calling getUsersAction with filters:', queryFilters, 'pagination:', pagination);
+      const result = await getUsersAction(queryFilters, pagination);
+      console.log('[UsersManager] getUsersAction result:', result);
+
+      if (result.success) {
+        console.log('[UsersManager] Success! Setting users:', result.data.data);
+        setUsers(result.data.data);
+      } else {
+        console.error('[UsersManager] Error response:', result);
+        setError(result as ErrorResponse);
+        console.error('[UsersManager] Error fetching users:', (result as any).error);
+      }
+
+      setLoading(false);
+    };
+
+    fetchUsers();
+  }, [filters, pagination, sortOrder]);
+
+  // ── Filter users based on active tab and search ──
+  const filteredUsers = users.filter((u) => {
+    const matchesTab = activeTab === 'members' ? u.role === 'member' : u.role === 'author';
+    const matchesSearch = searchQuery === '' ||
+      (u.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      u.email.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesTab && matchesSearch;
+  });
 
   const members = filteredUsers.filter((u) => u.role === 'member');
   const authors = filteredUsers.filter((u) => u.role === 'author');
+
+  // ── Console logs for debugging ──
+  console.log('[UsersManager] Raw users data from database:', users);
+  console.log('[UsersManager] Filtered users:', filteredUsers);
+  console.log('[UsersManager] Members data for table:', members);
+  console.log('[UsersManager] Authors data for table:', authors);
+  console.log('[UsersManager] Active tab:', activeTab);
+  console.log('[UsersManager] Current filters:', filters);
+  console.log('[UsersManager] Current pagination:', pagination);
 
   // ── Request an action → opens the modal ──
   const requestAction = (type: ActionType, user: User) => {
@@ -137,34 +181,81 @@ export function UsersManager() {
 
   const closeModal = () => setPendingAction(null);
 
+  // ── Handle tab switch ──
+  const handleTabSwitch = (tab: ActiveTab) => {
+    setActiveTab(tab);
+    // Don't filter by role in the query - fetch all users and filter client-side
+    setFilters({ ...filters, role: undefined });
+    setPagination({ page: 1, limit: 10 });
+  };
+
+  // ── Handle search ──
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setFilters({ ...filters, search: query || undefined });
+    setPagination({ page: 1, limit: 10 });
+  };
+
   // ── Confirm → execute the action ──
-  const confirmAction = () => {
+  const confirmAction = async () => {
     if (!pendingAction) return;
     const { type, user } = pendingAction;
 
-    setUsers((prev) => prev.map((u) => {
-      if (u.id !== user.id) return u;
+    try {
+      let result;
       switch (type) {
-        case 'promote': return { ...u, role: 'author' as UserRole, posts_count: 0 };
-        case 'demote': return { ...u, role: 'member' as UserRole, posts_count: undefined };
-        case 'suspend': return { ...u, status: 'suspended' as UserStatus };
-        case 'reactivate': return { ...u, status: 'active' as UserStatus };
+        case 'promote':
+          result = await promoteUserAction(user.id);
+          break;
+        case 'demote':
+          result = await demoteUserAction(user.id);
+          break;
+        case 'suspend':
+          result = await suspendUserAction(user.id);
+          break;
+        case 'reactivate':
+          result = await reactivateUserAction(user.id);
+          break;
       }
-    }));
 
-    if (type === 'promote') setActiveTab('authors');
-    if (type === 'demote') setActiveTab('members');
+      if (result.success) {
+        // Update local state with the updated user
+        setUsers((prev) =>
+          prev.map((u) => (u.id === result.data.id ? result.data : u))
+        );
 
-    console.log(`[UsersManager] Action confirmed: ${type} → ${user.display_name}`);
+        // Move to appropriate tab if role changed
+        if (type === 'promote') {
+          handleTabSwitch('authors');
+        } else if (type === 'demote') {
+          handleTabSwitch('members');
+        }
+
+        console.log(`[UsersManager] Action confirmed: ${type} → ${user.display_name}`);
+      } else {
+        setError(result as ErrorResponse);
+        console.error(`[UsersManager] Action failed: ${type}`, result.error);
+      }
+    } catch (err) {
+      console.error(`[UsersManager] Error executing action: ${type}`, err);
+      setError({
+        success: false,
+        error: {
+          code: 'UNKNOWN_ERROR',
+          message: 'An unexpected error occurred. Please try again later.',
+        },
+      });
+    }
+
     closeModal();
   };
 
   // ── Shared cell renderers ──
   const userInfoCell = (row: User) => (
     <div className="flex items-center gap-3">
-      <UserAvatar name={row.display_name} />
+      <UserAvatar name={row.display_name || 'User'} />
       <div className="flex flex-col gap-0.5">
-        <span className="font-bold text-zinc-900 text-sm">{row.display_name}</span>
+        <span className="font-bold text-zinc-900 text-sm">{row.display_name || 'Unknown'}</span>
         <span className="text-xs text-zinc-400">{row.email}</span>
       </div>
     </div>
@@ -333,39 +424,46 @@ export function UsersManager() {
               placeholder="Search users..."
               icon={<Search size={16} />}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
 
           {/* ── Tab Switcher ── */}
-          <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-full w-fit">
-            <button
-              onClick={() => setActiveTab('members')}
-              className={cn(
-                'flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200',
-                activeTab === 'members' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
-              )}
-            >
-              <Users className="w-3.5 h-3.5" />
-              Members
-              <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', activeTab === 'members' ? 'bg-[#0066FF] text-white' : 'bg-zinc-200 text-zinc-500')}>
-                {members.length}
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('authors')}
-              className={cn(
-                'flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200',
-                activeTab === 'authors' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
-              )}
-            >
-              <Pen className="w-3.5 h-3.5" />
-              Authors
-              <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', activeTab === 'authors' ? 'bg-[#0066FF] text-white' : 'bg-zinc-200 text-zinc-500')}>
-                {authors.length}
-              </span>
-            </button>
-          </div>
+          {/* Calculate counts from all users, not filtered */}
+          {(() => {
+            const memberCount = users.filter((u) => u.role === 'member').length;
+            const authorCount = users.filter((u) => u.role === 'author').length;
+            return (
+              <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-full w-fit">
+                <button
+                  onClick={() => handleTabSwitch('members')}
+                  className={cn(
+                    'flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200',
+                    activeTab === 'members' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
+                  )}
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  Members
+                  <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', activeTab === 'members' ? 'bg-[#0066FF] text-white' : 'bg-zinc-200 text-zinc-500')}>
+                    {memberCount}
+                  </span>
+                </button>
+                <button
+                  onClick={() => handleTabSwitch('authors')}
+                  className={cn(
+                    'flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200',
+                    activeTab === 'authors' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'
+                  )}
+                >
+                  <Pen className="w-3.5 h-3.5" />
+                  Authors
+                  <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full', activeTab === 'authors' ? 'bg-[#0066FF] text-white' : 'bg-zinc-200 text-zinc-500')}>
+                    {authorCount}
+                  </span>
+                </button>
+              </div>
+            );
+          })()}
         </div>
 
       </div>
