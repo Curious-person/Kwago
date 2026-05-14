@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  LayoutGrid, 
-  FileText, 
-  Package, 
-  Users, 
-  MessageSquare, 
-  Layers, 
+import {
+  LayoutGrid,
+  FileText,
+  Package,
+  Users,
+  MessageSquare,
+  Layers,
   ShoppingBag,
+  Folder,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -26,7 +27,7 @@ export const Sidebar = ({ isAdmin, isAuthor, role }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <aside 
+    <aside
       className={cn(
         "sticky top-[73px] h-[calc(100vh-73px)] shrink-0 border-r border-zinc-200 flex flex-col pt-8 pb-6 px-4 transition-all duration-300 overflow-y-auto",
         isCollapsed ? "w-20 px-2" : "w-56"
@@ -51,6 +52,9 @@ export const Sidebar = ({ isAdmin, isAuthor, role }: SidebarProps) => {
             </SidebarLink>
             <SidebarLink href="/dashboard/author/products" icon={<Package size={15} />} isCollapsed={isCollapsed}>
               My Products
+            </SidebarLink>
+            <SidebarLink href="/dashboard/author/categories" icon={<Folder size={15} />} isCollapsed={isCollapsed}>
+              My Categories
             </SidebarLink>
             <SidebarLink href="/dashboard/author/sales" icon={<ShoppingBag size={15} />} isCollapsed={isCollapsed}>
               My Sales
