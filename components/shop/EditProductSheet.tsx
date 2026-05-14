@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/Button';
 import { Product } from '@/types/product';
 import { Badge } from '@/components/ui/Badge';
 import Image from 'next/image';
+import { updateProduct } from '@/lib/services/productService';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 interface EditProductSheetProps {
   product: Product | null;
@@ -28,10 +30,13 @@ export const EditProductSheet = ({
   onSave,
 }: EditProductSheetProps) => {
   const [formData, setFormData] = useState<Product | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (product) {
       setFormData(product);
+      setSaveError(null);
     }
   }, [product]);
 
@@ -58,11 +63,31 @@ export const EditProductSheet = ({
     });
   };
 
-  const handleSave = () => {
-    if (formData) {
-      onSave(formData);
-      onOpenChange(false);
+  const handleSave = async () => {
+    if (!formData) return;
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    const response = await updateProduct(formData.id, {
+      name: formData.name,
+      price: formData.price,
+      condition: formData.condition,
+      image: formData.image,
+      category: formData.category,
+      description: formData.description,
+    });
+
+    if (!response.success) {
+      setSaveError(response.error.message);
+      setIsSaving(false);
+      return;
     }
+
+    // Success - call parent callback with updated product
+    onSave(response.data);
+    setIsSaving(false);
+    onOpenChange(false);
   };
 
   return (
@@ -78,6 +103,19 @@ export const EditProductSheet = ({
         </SheetHeader>
 
         <div className="space-y-8 overflow-y-auto pr-2 -mr-2 max-h-[calc(100vh-200px)] scrollbar-hide">
+          {/* Error Display */}
+          {saveError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle size={16} className="text-red-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-900 mb-1">Failed to save changes</p>
+                  <p className="text-sm text-red-700">{saveError}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Image Preview */}
           <div className="space-y-3">
             <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
@@ -97,6 +135,7 @@ export const EditProductSheet = ({
               onChange={handleChange}
               placeholder="Image URL"
               className="bg-zinc-50"
+              disabled={isSaving}
             />
           </div>
 
@@ -111,6 +150,7 @@ export const EditProductSheet = ({
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="e.g. Marvel Legends Iron Man"
+                disabled={isSaving}
               />
             </div>
 
@@ -125,15 +165,17 @@ export const EditProductSheet = ({
                   value={formData.price}
                   onChange={handleChange}
                   placeholder="29.99"
+                  disabled={isSaving}
                 />
               </div>
               <div className="space-y-3">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                   Condition
                 </label>
-                <div 
-                  className="h-10 flex items-center justify-between px-4 bg-zinc-100 rounded-full cursor-pointer hover:bg-zinc-200 transition-colors"
-                  onClick={handleConditionToggle}
+                <div
+                  className={`h-10 flex items-center justify-between px-4 bg-zinc-100 rounded-full transition-colors ${isSaving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-zinc-200'
+                    }`}
+                  onClick={isSaving ? undefined : handleConditionToggle}
                 >
                   <span className="text-sm font-medium text-zinc-900">{formData.condition}</span>
                   <Badge variant={formData.condition === 'New' ? 'default' : 'secondary'} className="rounded-full h-5">
@@ -152,14 +194,22 @@ export const EditProductSheet = ({
                 value={formData.category}
                 onChange={handleChange}
                 placeholder="e.g. Marvel Legends"
+                disabled={isSaving}
               />
             </div>
           </div>
         </div>
 
         <div className="mt-auto pt-8 border-t border-zinc-100">
-          <Button onClick={handleSave} className="w-full h-14 text-base font-bold">
-            Save Changes
+          <Button onClick={handleSave} className="w-full h-14 text-base font-bold" disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 size={16} className="animate-spin mr-2" />
+                Saving...
+              </>
+            ) : (
+              'Save Changes'
+            )}
           </Button>
         </div>
       </SheetContent>

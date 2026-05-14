@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Image as ImageIcon, Tag, DollarSign, CheckCircle2 } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
+import { ArrowLeft, Save, Image as ImageIcon, Tag, DollarSign, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -13,81 +13,69 @@ import {
     DialogFooter,
     DialogTitle,
 } from '@/components/ui/dialog';
-
-const MOCK_PRODUCTS: Product[] = [
-    {
-        id: '1',
-        name: 'Marvel Legends Series Iron Man Mark LXXXV',
-        price: 24.99,
-        condition: 'New',
-        category: 'Marvel Legends',
-        image: 'https://images.unsplash.com/photo-1531279554141-7dfdb443c375?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-        id: '2',
-        name: 'The Lord of the Rings: Witch-King of Angmar Statue',
-        price: 499.00,
-        condition: 'New',
-        category: 'Weta Workshop',
-        image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-        id: '3',
-        name: 'Spider-Man: Across the Spider-Verse Gwen Stacy',
-        price: 19.99,
-        condition: 'Used',
-        category: 'Marvel Legends',
-        image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-        id: '4',
-        name: 'Balrog, Flame of Udûn Statue',
-        price: 899.00,
-        condition: 'New',
-        category: 'Weta Workshop',
-        image: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-        id: '5',
-        name: 'Captain America Shield Prop Replica',
-        price: 149.00,
-        condition: 'New',
-        category: 'Props',
-        image: 'https://images.unsplash.com/photo-1626278664285-f7c8a8107e93?q=80&w=800&auto=format&fit=crop'
-    },
-    {
-        id: '6',
-        name: 'Wolverine (Astonishing X-Men) Retro Figure',
-        price: 34.99,
-        condition: 'Used',
-        category: 'Marvel Legends',
-        image: 'https://images.unsplash.com/photo-1591117207239-788db8ec6c3b?q=80&w=800&auto=format&fit=crop'
-    }
-];
+import { Product } from '@/types/product';
+import { fetchProductById, updateProduct } from '@/lib/services/productService';
 
 export default function EditProductPage() {
     const router = useRouter();
+    const params = useParams();
+    const productId = params.id as string;
+
     const [formData, setFormData] = useState<Product | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [saveError, setSaveError] = useState<string | null>(null);
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
-    // Get product ID from URL
-    const productId = router.pathname.split('/').pop();
-
+    // Fetch product on mount
     useEffect(() => {
-        const product = MOCK_PRODUCTS.find((p) => p.id === productId);
-        if (product) {
-            setFormData(product);
+        async function loadProduct() {
+            setIsLoading(true);
+            setError(null);
+
+            const response = await fetchProductById(productId);
+
+            if (!response.success) {
+                setError(response.error.message);
+                setIsLoading(false);
+                return;
+            }
+
+            setFormData(response.data);
+            setIsLoading(false);
         }
+
+        loadProduct();
     }, [productId]);
 
-    if (!formData) {
+    // Loading state
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
                 <div className="text-center">
                     <div className="w-16 h-16 rounded-full bg-zinc-100 flex items-center justify-center mx-auto mb-4">
-                        <div className="w-4 h-4 rounded-full bg-zinc-400 animate-pulse" />
+                        <Loader2 size={24} className="text-zinc-400 animate-spin" />
                     </div>
                     <p className="text-zinc-500">Loading product...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Error state (product not found or fetch failed)
+    if (error || !formData) {
+        return (
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="text-center max-w-md">
+                    <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle size={24} className="text-red-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-zinc-900 mb-2">Failed to Load Product</h2>
+                    <p className="text-zinc-500 mb-6">{error || 'Product not found'}</p>
+                    <Button onClick={() => router.push('/dashboard/author/products')}>
+                        Back to Products
+                    </Button>
                 </div>
             </div>
         );
@@ -103,8 +91,48 @@ export default function EditProductPage() {
         });
     };
 
-    const handleSave = () => {
-        console.log('Updating product:', formData);
+    const handleSave = async () => {
+        if (!formData) return;
+
+        // Client-side validation
+        if (!formData.name.trim()) {
+            setSaveError('Product name is required');
+            return;
+        }
+        if (formData.price <= 0) {
+            setSaveError('Price must be greater than 0');
+            return;
+        }
+        if (!formData.category.trim()) {
+            setSaveError('Category is required');
+            return;
+        }
+        if (!formData.image.trim()) {
+            setSaveError('Image URL is required');
+            return;
+        }
+
+        setIsSaving(true);
+        setSaveError(null);
+
+        const response = await updateProduct(productId, {
+            name: formData.name,
+            price: formData.price,
+            condition: formData.condition,
+            image: formData.image,
+            category: formData.category,
+            description: formData.description,
+        });
+
+        if (!response.success) {
+            setSaveError(response.error.message);
+            setIsSaving(false);
+            return;
+        }
+
+        // Success - update form data with saved product and show modal
+        setFormData(response.data);
+        setIsSaving(false);
         setIsPublishModalOpen(true);
     };
 
@@ -131,12 +159,21 @@ export default function EditProductPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <Button variant="secondary" onClick={() => router.push('/dashboard/author/products')}>
+                    <Button variant="secondary" onClick={() => router.push('/dashboard/author/products')} disabled={isSaving}>
                         Cancel
                     </Button>
-                    <Button onClick={handleSave} className="gap-2">
-                        <Save size={16} />
-                        <span>Save Changes</span>
+                    <Button onClick={handleSave} className="gap-2" disabled={isSaving}>
+                        {isSaving ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin" />
+                                <span>Saving...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Save size={16} />
+                                <span>Save Changes</span>
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>
@@ -144,6 +181,19 @@ export default function EditProductPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                 {/* Main Content */}
                 <div className="md:col-span-2 space-y-8">
+                    {/* Error Display */}
+                    {saveError && (
+                        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+                            <div className="flex items-start gap-3">
+                                <AlertCircle size={16} className="text-red-600 mt-0.5" />
+                                <div className="flex-1">
+                                    <p className="text-sm font-semibold text-red-900 mb-1">Failed to update product</p>
+                                    <p className="text-sm text-red-700">{saveError}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="space-y-6">
                         {/* Image Upload */}
                         <div className="space-y-3">
@@ -165,6 +215,7 @@ export default function EditProductPage() {
                                 onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                                 placeholder="Image URL"
                                 className="bg-zinc-50"
+                                disabled={isSaving}
                             />
                         </div>
 
@@ -179,6 +230,7 @@ export default function EditProductPage() {
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="e.g. Marvel Legends Iron Man Mark LXXXV"
                                     className="text-xl font-bold py-6 px-6"
+                                    disabled={isSaving}
                                 />
                             </div>
 
@@ -195,6 +247,7 @@ export default function EditProductPage() {
                                             onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                                             placeholder="29.99"
                                             className="pl-10 h-12"
+                                            disabled={isSaving}
                                         />
                                     </div>
                                 </div>
@@ -203,8 +256,9 @@ export default function EditProductPage() {
                                         Condition
                                     </label>
                                     <div
-                                        className="h-12 flex items-center justify-between px-4 bg-zinc-100 rounded-full cursor-pointer hover:bg-zinc-200 transition-colors"
-                                        onClick={handleConditionToggle}
+                                        className={`h-12 flex items-center justify-between px-4 bg-zinc-100 rounded-full transition-colors ${isSaving ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-zinc-200'
+                                            }`}
+                                        onClick={isSaving ? undefined : handleConditionToggle}
                                     >
                                         <span className="text-sm font-bold text-zinc-900">{formData.condition}</span>
                                         <Badge variant={formData.condition === 'New' ? 'default' : 'secondary'} className="rounded-full h-6 px-3">
@@ -225,8 +279,22 @@ export default function EditProductPage() {
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                         placeholder="e.g. Marvel Legends"
                                         className="pl-10 h-12"
+                                        disabled={isSaving}
                                     />
                                 </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                                    Description (Optional)
+                                </label>
+                                <textarea
+                                    value={formData.description || ''}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    placeholder="Add a detailed description of your product..."
+                                    className="w-full min-h-[120px] px-4 py-3 rounded-2xl border border-zinc-200 bg-zinc-50 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent resize-y disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={isSaving}
+                                />
                             </div>
                         </div>
                     </div>

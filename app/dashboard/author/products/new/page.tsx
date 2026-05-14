@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Image as ImageIcon, Tag, DollarSign, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Save, Image as ImageIcon, Tag, DollarSign, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -14,6 +14,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Product } from '@/types/product';
+import { createProduct } from '@/lib/services/productService';
 
 export default function NewProductPage() {
     const router = useRouter();
@@ -27,6 +28,9 @@ export default function NewProductPage() {
     });
 
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
+    const [createError, setCreateError] = useState<string | null>(null);
+    const [createdProduct, setCreatedProduct] = useState<Product | null>(null);
 
     const handleConditionToggle = () => {
         setFormData((prev) => ({
@@ -35,8 +39,46 @@ export default function NewProductPage() {
         }));
     };
 
-    const handleSave = () => {
-        console.log('Saving product:', formData);
+    const handleSave = async () => {
+        // Client-side validation
+        if (!formData.name.trim()) {
+            setCreateError('Product name is required');
+            return;
+        }
+        if (formData.price <= 0) {
+            setCreateError('Price must be greater than 0');
+            return;
+        }
+        if (!formData.category.trim()) {
+            setCreateError('Category is required');
+            return;
+        }
+        if (!formData.image.trim()) {
+            setCreateError('Image URL is required');
+            return;
+        }
+
+        setIsCreating(true);
+        setCreateError(null);
+
+        const response = await createProduct({
+            name: formData.name,
+            price: formData.price,
+            condition: formData.condition,
+            image: formData.image,
+            category: formData.category,
+            description: formData.description,
+        });
+
+        if (!response.success) {
+            setCreateError(response.error.message);
+            setIsCreating(false);
+            return;
+        }
+
+        // Success - show modal and store created product
+        setCreatedProduct(response.data);
+        setIsCreating(false);
         setIsPublishModalOpen(true);
     };
 
@@ -63,12 +105,21 @@ export default function NewProductPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <Button variant="secondary" onClick={() => router.push('/dashboard/author/products')}>
+                    <Button variant="secondary" onClick={() => router.push('/dashboard/author/products')} disabled={isCreating}>
                         Cancel
                     </Button>
-                    <Button onClick={handleSave} className="gap-2">
-                        <Save size={16} />
-                        <span>Save Product</span>
+                    <Button onClick={handleSave} className="gap-2" disabled={isCreating}>
+                        {isCreating ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin" />
+                                <span>Saving...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Save size={16} />
+                                <span>Save Product</span>
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>
@@ -76,6 +127,19 @@ export default function NewProductPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                 {/* Main Content */}
                 <div className="md:col-span-2 space-y-8">
+                    {/* Error Display */}
+                    {createError && (
+                        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+                            <div className="flex items-start gap-3">
+                                <AlertCircle size={16} className="text-red-600 mt-0.5" />
+                                <div className="flex-1">
+                                    <p className="text-sm font-semibold text-red-900 mb-1">Failed to create product</p>
+                                    <p className="text-sm text-red-700">{createError}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="space-y-6">
                         {/* Image Upload */}
                         <div className="space-y-3">
@@ -97,6 +161,7 @@ export default function NewProductPage() {
                                 onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                                 placeholder="Image URL"
                                 className="bg-zinc-50"
+                                disabled={isCreating}
                             />
                         </div>
 
@@ -111,6 +176,7 @@ export default function NewProductPage() {
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="e.g. Marvel Legends Iron Man Mark LXXXV"
                                     className="text-xl font-bold py-6 px-6"
+                                    disabled={isCreating}
                                 />
                             </div>
 
@@ -127,6 +193,7 @@ export default function NewProductPage() {
                                             onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                                             placeholder="29.99"
                                             className="pl-10 h-12"
+                                            disabled={isCreating}
                                         />
                                     </div>
                                 </div>
@@ -135,8 +202,9 @@ export default function NewProductPage() {
                                         Condition
                                     </label>
                                     <div
-                                        className="h-12 flex items-center justify-between px-4 bg-zinc-100 rounded-full cursor-pointer hover:bg-zinc-200 transition-colors"
-                                        onClick={handleConditionToggle}
+                                        className={`h-12 flex items-center justify-between px-4 bg-zinc-100 rounded-full transition-colors ${isCreating ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-zinc-200'
+                                            }`}
+                                        onClick={isCreating ? undefined : handleConditionToggle}
                                     >
                                         <span className="text-sm font-bold text-zinc-900">{formData.condition}</span>
                                         <Badge variant={formData.condition === 'New' ? 'default' : 'secondary'} className="rounded-full h-6 px-3">
@@ -157,8 +225,22 @@ export default function NewProductPage() {
                                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                                         placeholder="e.g. Marvel Legends"
                                         className="pl-10 h-12"
+                                        disabled={isCreating}
                                     />
                                 </div>
+                            </div>
+
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                                    Description (Optional)
+                                </label>
+                                <textarea
+                                    value={formData.description || ''}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    placeholder="Add a detailed description of your product..."
+                                    className="w-full min-h-[120px] px-4 py-3 rounded-2xl border border-zinc-200 bg-zinc-50 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent resize-y disabled:opacity-50 disabled:cursor-not-allowed"
+                                    disabled={isCreating}
+                                />
                             </div>
                         </div>
                     </div>
