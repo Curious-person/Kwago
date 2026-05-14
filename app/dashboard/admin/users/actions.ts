@@ -47,14 +47,9 @@ export async function getUsersAction(
     pagination?: PaginationParams
 ): Promise<ServiceResponse<PaginatedResponse<User>>> {
     try {
-        console.log('[getUsersAction] Starting fetch with filters:', filters, 'pagination:', pagination);
-
         // Check admin authorization
         const isAdmin = await checkAdminRole();
-        console.log('[getUsersAction] Admin check result:', isAdmin);
-
         if (!isAdmin) {
-            console.log('[getUsersAction] User is not admin, returning permission error');
             return createErrorResponse(
                 'PERMISSION_ERROR',
                 "You don't have permission to perform this action."
@@ -62,9 +57,7 @@ export async function getUsersAction(
         }
 
         // Call UserService to fetch users
-        console.log('[getUsersAction] Calling getUsers service...');
         const result = await getUsers(filters, pagination);
-        console.log('[getUsersAction] Result from getUsers:', result);
         return result;
     } catch (error) {
         console.error('[getUsersAction] Error:', error);

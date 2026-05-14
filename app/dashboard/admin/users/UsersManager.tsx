@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DataTable, ColumnDef } from '@/components/ui/data-table';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -134,15 +134,11 @@ export function UsersManager() {
         sortOrder,
       };
 
-      console.log('[UsersManager] Calling getUsersAction with filters:', queryFilters, 'pagination:', pagination);
       const result = await getUsersAction(queryFilters, pagination);
-      console.log('[UsersManager] getUsersAction result:', result);
 
       if (result.success) {
-        console.log('[UsersManager] Success! Setting users:', result.data.data);
         setUsers(result.data.data);
       } else {
-        console.error('[UsersManager] Error response:', result);
         setError(result as ErrorResponse);
         console.error('[UsersManager] Error fetching users:', (result as any).error);
       }
@@ -154,47 +150,38 @@ export function UsersManager() {
   }, [filters, pagination, sortOrder]);
 
   // ── Filter users based on active tab and search ──
-  const filteredUsers = users.filter((u) => {
-    const matchesTab = activeTab === 'members' ? u.role === 'member' : u.role === 'author';
-    const matchesSearch = searchQuery === '' ||
-      (u.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  const filteredUsers = useMemo(() => {
+    return users.filter((u) => {
+      const matchesTab = activeTab === 'members' ? u.role === 'member' : u.role === 'author';
+      const matchesSearch = searchQuery === '' ||
+        (u.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+        u.email.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesTab && matchesSearch;
+    });
+  }, [users, activeTab, searchQuery]);
 
-  const members = filteredUsers.filter((u) => u.role === 'member');
-  const authors = filteredUsers.filter((u) => u.role === 'author');
+  const members = useMemo(() => filteredUsers.filter((u) => u.role === 'member'), [filteredUsers]);
+  const authors = useMemo(() => filteredUsers.filter((u) => u.role === 'author'), [filteredUsers]);
 
-  // ── Console logs for debugging ──
-  console.log('[UsersManager] Raw users data from database:', users);
-  console.log('[UsersManager] Filtered users:', filteredUsers);
-  console.log('[UsersManager] Members data for table:', members);
-  console.log('[UsersManager] Authors data for table:', authors);
-  console.log('[UsersManager] Active tab:', activeTab);
-  console.log('[UsersManager] Current filters:', filters);
-  console.log('[UsersManager] Current pagination:', pagination);
-
-  // ── Request an action → opens the modal ──
-  const requestAction = (type: ActionType, user: User) => {
+  // ── Memoized callbacks ──
+  const requestAction = useCallback((type: ActionType, user: User) => {
     setPendingAction({ type, user });
-  };
+  }, []);
 
-  const closeModal = () => setPendingAction(null);
+  const closeModal = useCallback(() => setPendingAction(null), []);
 
-  // ── Handle tab switch ──
-  const handleTabSwitch = (tab: ActiveTab) => {
+  const handleTabSwitch = useCallback((tab: ActiveTab) => {
     setActiveTab(tab);
     // Don't filter by role in the query - fetch all users and filter client-side
-    setFilters({ ...filters, role: undefined });
+    setFilters((prev) => ({ ...prev, role: undefined }));
     setPagination({ page: 1, limit: 10 });
-  };
+  }, []);
 
-  // ── Handle search ──
-  const handleSearch = (query: string) => {
+  const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
-    setFilters({ ...filters, search: query || undefined });
+    setFilters((prev) => ({ ...prev, search: query || undefined }));
     setPagination({ page: 1, limit: 10 });
-  };
+  }, []);
 
   // ── Confirm → execute the action ──
   const confirmAction = async () => {
@@ -251,7 +238,7 @@ export function UsersManager() {
   };
 
   // ── Shared cell renderers ──
-  const userInfoCell = (row: User) => (
+  const userInfoCell = useCallback((row: User) => (
     <div className="flex items-center gap-3">
       <UserAvatar name={row.display_name || 'User'} />
       <div className="flex flex-col gap-0.5">
@@ -259,16 +246,16 @@ export function UsersManager() {
         <span className="text-xs text-zinc-400">{row.email}</span>
       </div>
     </div>
-  );
+  ), []);
 
-  const joinedCell = (row: User) => (
+  const joinedCell = useCallback((row: User) => (
     <span className="text-sm text-zinc-500">
       {new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
     </span>
-  );
+  ), []);
 
   // ── Column Definitions ──
-  const memberColumns: ColumnDef<User>[] = [
+  const memberColumns: ColumnDef<User>[] = useMemo(() => [
     { header: 'User', filterable: true, filterValue: (row) => `${row.display_name} ${row.email}`, cell: userInfoCell },
     { header: 'Joined', filterable: true, filterValue: (row) => row.created_at, cell: joinedCell },
     { header: 'Status', cell: (row) => <StatusBadge status={row.status} /> },
@@ -302,9 +289,9 @@ export function UsersManager() {
         </div>
       ),
     },
-  ];
+  ], [requestAction]);
 
-  const authorColumns: ColumnDef<User>[] = [
+  const authorColumns: ColumnDef<User>[] = useMemo(() => [
     { header: 'User', filterable: true, filterValue: (row) => `${row.display_name} ${row.email}`, cell: userInfoCell },
     { header: 'Joined', filterable: true, filterValue: (row) => row.created_at, cell: joinedCell },
     {
@@ -349,7 +336,7 @@ export function UsersManager() {
         </div>
       ),
     },
-  ];
+  ], [requestAction]);
 
   // ── Modal config for the pending action ──
   const actionConfig = pendingAction ? ACTION_CONFIG[pendingAction.type] : null;
