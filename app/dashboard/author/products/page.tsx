@@ -99,7 +99,7 @@ export default function AuthorProductsPage() {
 
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchQuery.toLowerCase())
+    p.category_names?.some(name => name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -175,7 +175,8 @@ export default function AuthorProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {filteredProducts.map((product) => (
+                {filteredProducts.map((product) => {
+                  return (
                   <tr key={product.id} className="hover:bg-zinc-50/50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
@@ -190,7 +191,9 @@ export default function AuthorProductsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
-                        {product.category}
+                        {product.category_names && product.category_names.length > 0
+                          ? product.category_names.join(', ')
+                          : 'Uncategorized'}
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
@@ -233,7 +236,8 @@ export default function AuthorProductsPage() {
                       </DropdownMenu>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

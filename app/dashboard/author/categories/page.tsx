@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Category, Notification, ModalState } from '@/lib/types/category';
-import { MOCK_CATEGORIES } from '@/lib/data/mockCategories';
+import { fetchCategories, createCategory, updateCategory, deleteCategory } from './actions';
 import { CategoryHeader } from '@/components/dashboard/CategoryHeader';
 import { CategoryGrid } from '@/components/dashboard/CategoryGrid';
 import { CreateCategoryModal } from '@/components/dashboard/CreateCategoryModal';
@@ -12,15 +12,6 @@ import { DeleteConfirmationModal } from '@/components/dashboard/DeleteConfirmati
 import { Notification as NotificationComponent } from '@/components/dashboard/Notification';
 import { LoadingState } from '@/components/dashboard/LoadingState';
 import { ErrorState } from '@/components/dashboard/ErrorState';
-import {
-    getCachedCategories,
-    saveCategoriesToCache,
-    updateCategoryInCache,
-    addCategoryToCache,
-    removeCategoryFromCache,
-    isCacheStale,
-    getCacheAge,
-} from '@/lib/services/categoryCache';
 
 /**
  * CategoryManager Page Component
@@ -50,138 +41,49 @@ export default function CategoryManagerPage() {
         categoryToDelete: null,
     });
 
-    // Load categories on mount with caching
+    // Load categories on mount
     useEffect(() => {
         loadCategories();
-
-        // Set up background refresh if cache is stale
-        const checkAndRefreshCache = () => {
-            if (isCacheStale()) {
-                console.log('Cache is stale, refreshing in background...');
-                loadCategories(true); // Force refresh in background
-            }
-        };
-
-        // Check cache staleness every minute
-        const refreshInterval = setInterval(checkAndRefreshCache, 60 * 1000);
-
-        return () => clearInterval(refreshInterval);
     }, []);
 
     /**
-     * API_INTEGRATION_POINT_1: Fetch categories
-     * Replace with: const response = await fetch('/api/categories');
-     * Expected response: { categories: Category[] }
-     *
-     * Performance optimization: Uses local caching to reduce API calls
-     * Requirements: 14.4, 14.5
+     * Fetch categories from Supabase
      */
-    const loadCategories = useCallback(async (backgroundRefresh = false) => {
+    const loadCategories = useCallback(async () => {
         try {
-            if (!backgroundRefresh) {
-                setIsLoading(true);
-            }
+            setIsLoading(true);
             setError(null);
             setIsRetrying(false);
 
-            // Check cache first (unless forcing refresh)
-            if (!backgroundRefresh) {
-                const cachedCategories = getCachedCategories();
-                if (cachedCategories) {
-                    console.log('Using cached categories for initial display');
-                    setCategories(cachedCategories);
+            const response = await fetchCategories();
 
-                    // Show cache age in console for debugging
-                    const cacheAge = getCacheAge();
-                    if (cacheAge !== null) {
-                        console.log(`Cache age: ${cacheAge} seconds`);
-                    }
-
-                    // Still fetch fresh data in background if cache is stale
-                    if (isCacheStale()) {
-                        console.log('Cache is stale, fetching fresh data in background...');
-                        setTimeout(() => loadCategories(true), 100); // Small delay to prioritize UI
-                    }
-
-                    if (!backgroundRefresh) {
-                        setIsLoading(false);
-                    }
-                    return;
-                }
+            if (response.success && response.data) {
+                setCategories(response.data as Category[]);
+            } else {
+                throw new Error(response.error || 'Failed to fetch categories');
             }
-
-            // Mock data - replace with API call
-            // Simulate network delay (shorter for background refresh)
-            const delay = backgroundRefresh ? 100 : 500;
-            await new Promise(resolve => setTimeout(resolve, delay));
-
-            const mockCategories = MOCK_CATEGORIES;
-
-            // Update state
-            setCategories(mockCategories);
-
-            // Save to cache
-            saveCategoriesToCache(mockCategories);
-
-            // Show success notification for background refresh
-            if (backgroundRefresh) {
-                console.log('Background refresh completed, cache updated');
-            }
-        } catch (err) {
-            // Handle different error types
-            let errorMessage = 'Failed to load categories. Please try again.';
-
-            if (err instanceof TypeError && err.message.includes('fetch')) {
-                errorMessage = 'Network error. Please check your connection and try again.';
-            } else if (err instanceof Error) {
-                if (err.message.includes('401') || err.message.includes('Unauthorized')) {
-                    errorMessage = 'You are not authorized to view categories.';
-                } else if (err.message.includes('404') || err.message.includes('Not Found')) {
-                    errorMessage = 'Categories not found.';
-                } else if (err.message.includes('500') || err.message.includes('Server')) {
-                    errorMessage = 'Server error. Please try again later.';
-                }
-            }
-
-            // Only show error if not a background refresh
-            if (!backgroundRefresh) {
-                setError(errorMessage);
-            }
+        } catch (err: any) {
+            setError(err.message || 'Failed to load categories. Please try again.');
             console.error('Error loading categories:', err);
         } finally {
-            if (!backgroundRefresh) {
-                setIsLoading(false);
-            }
+            setIsLoading(false);
         }
     }, []);
 
     /**
-     * API_INTEGRATION_POINT_2: Create category
-     * Replace with: const response = await fetch('/api/categories', { method: 'POST', ... });
-     * Expected response: { id, name, description, author_id, product_count, product_images, created_at, updated_at }
-     *
-     * Performance optimization: Updates local cache after creation
-     * Requirements: 14.2, 14.4
+     * Create category via Server Action
      */
     const handleCreateCategory = useCallback(
         async (name: string, description: string | undefined) => {
             try {
-                const newCategory: Category = {
-                    id: `cat-${Date.now()}`,
-                    name,
-                    description,
-                    author_id: 'user-123',
-                    product_count: 0,
-                    product_images: [],
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                };
+                const response = await createCategory(name, description);
+                
+                if (!response.success || !response.data) {
+                    throw new Error(response.error || 'Failed to create category');
+                }
 
                 // Update state
-                setCategories([...categories, newCategory]);
-
-                // Update cache
-                addCategoryToCache(newCategory);
+                setCategories(prev => [response.data as Category, ...prev]);
 
                 setModals(prev => ({ ...prev, isCreateModalOpen: false }));
                 setNotification({
@@ -189,48 +91,33 @@ export default function CategoryManagerPage() {
                     message: 'Category created successfully',
                     duration: 3000,
                 });
-            } catch (err) {
+            } catch (err: any) {
                 setNotification({
                     type: 'error',
-                    message: 'Failed to create category. Please try again.',
+                    message: err.message || 'Failed to create category. Please try again.',
                 });
                 console.error('Error creating category:', err);
             }
         },
-        [categories]
+        []
     );
 
     /**
-     * API_INTEGRATION_POINT_3: Update category
-     * Replace with: const response = await fetch(`/api/categories/${id}`, { method: 'PUT', ... });
-     * Expected response: { id, name, description, author_id, product_count, product_images, created_at, updated_at }
-     *
-     * Performance optimization: Updates local cache after update
-     * Requirements: 14.2, 14.4
+     * Update category via Server Action
      */
     const handleUpdateCategory = useCallback(
         async (id: string, name: string, description: string | undefined) => {
             try {
-                const updatedCategory: Category = {
-                    id,
-                    name,
-                    description,
-                    author_id: 'user-123',
-                    product_count: categories.find(cat => cat.id === id)?.product_count || 0,
-                    product_images: categories.find(cat => cat.id === id)?.product_images || [],
-                    created_at: categories.find(cat => cat.id === id)?.created_at || new Date().toISOString(),
-                    updated_at: new Date().toISOString(),
-                };
+                const response = await updateCategory(id, name, description);
+                
+                if (!response.success || !response.data) {
+                    throw new Error(response.error || 'Failed to update category');
+                }
 
                 // Update state
-                setCategories(
-                    categories.map(cat =>
-                        cat.id === id ? updatedCategory : cat
-                    )
+                setCategories(prev => 
+                    prev.map(cat => (cat.id === id ? (response.data as Category) : cat))
                 );
-
-                // Update cache
-                updateCategoryInCache(updatedCategory);
 
                 setModals(prev => ({ ...prev, isEditModalOpen: false, editingCategory: null }));
                 setNotification({
@@ -238,33 +125,31 @@ export default function CategoryManagerPage() {
                     message: 'Category updated successfully',
                     duration: 3000,
                 });
-            } catch (err) {
+            } catch (err: any) {
                 setNotification({
                     type: 'error',
-                    message: 'Failed to update category. Please try again.',
+                    message: err.message || 'Failed to update category. Please try again.',
                 });
                 console.error('Error updating category:', err);
             }
         },
-        [categories]
+        []
     );
 
     /**
-     * API_INTEGRATION_POINT_4: Delete category
-     * Replace with: const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
-     * Expected response: { success: true }
-     *
-     * Performance optimization: Updates local cache after deletion
-     * Requirements: 14.2, 14.4
+     * Delete category via Server Action
      */
     const handleDeleteCategory = useCallback(
         async (id: string) => {
             try {
-                // Update state
-                setCategories(categories.filter(cat => cat.id !== id));
+                const response = await deleteCategory(id);
+                
+                if (!response.success) {
+                    throw new Error(response.error || 'Failed to delete category');
+                }
 
-                // Update cache
-                removeCategoryFromCache(id);
+                // Update state
+                setCategories(prev => prev.filter(cat => cat.id !== id));
 
                 setModals(prev => ({ ...prev, isDeleteModalOpen: false, categoryToDelete: null }));
                 setNotification({
@@ -272,15 +157,15 @@ export default function CategoryManagerPage() {
                     message: 'Category deleted successfully',
                     duration: 3000,
                 });
-            } catch (err) {
+            } catch (err: any) {
                 setNotification({
                     type: 'error',
-                    message: 'Failed to delete category. Please try again.',
+                    message: err.message || 'Failed to delete category. Please try again.',
                 });
                 console.error('Error deleting category:', err);
             }
         },
-        [categories]
+        []
     );
 
     /**

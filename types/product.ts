@@ -4,7 +4,8 @@ export interface Product {
   price: number;
   condition: 'New' | 'Used';
   image: string;
-  category: string;
+  category_ids?: string[];
+  category_names?: string[];
   description?: string;
 }
 
@@ -15,11 +16,20 @@ export interface ProductRow {
   price: number;
   condition: 'New' | 'Used';
   image: string;
-  category: string;
   description: string | null;
   author_id: string;
   created_at: string;
   updated_at: string;
+}
+
+// Interface for joined product queries
+export interface ProductRowWithCategories extends ProductRow {
+  product_categories?: { 
+    category_id: string;
+    categories?: {
+      name: string;
+    };
+  }[];
 }
 
 // Input type for creating products
@@ -28,7 +38,7 @@ export interface CreateProductInput {
   price: number;
   condition: 'New' | 'Used';
   image: string;
-  category: string;
+  category_ids?: string[];
   description?: string;
 }
 
@@ -38,7 +48,7 @@ export interface UpdateProductInput {
   price?: number;
   condition?: 'New' | 'Used';
   image?: string;
-  category?: string;
+  category_ids?: string[];
   description?: string;
 }
 

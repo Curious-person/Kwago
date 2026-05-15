@@ -26,6 +26,7 @@ import { createClient } from '@/lib/supabase/client';
 import type {
     Product,
     ProductRow,
+    ProductRowWithCategories,
     CreateProductInput,
     UpdateProductInput,
 } from '@/types/product';
@@ -130,7 +131,6 @@ export type ProductServiceResponse<T> =
  * - price: required, must be positive number, max 2 decimal places
  * - condition: required, must be exactly 'New' or 'Used'
  * - image: required, must be non-empty string, valid URL format
- * - category: required, must be non-empty string, max 100 characters
  * - description: optional, max 2000 characters if provided
  *
  * @param data - Unknown data to validate against Product schema
@@ -329,40 +329,6 @@ export function validateProduct(data: unknown): ProductServiceResponse<Product> 
         };
     }
 
-    // Validate category field
-    if (!('category' in obj)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'Product validation failed: missing required field "category"',
-                details: { field: 'category', reason: 'field is required' },
-            },
-        };
-    }
-
-    if (typeof obj.category !== 'string' || obj.category.trim() === '') {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'Product validation failed: "category" must be a non-empty string',
-                details: { field: 'category', reason: 'must be a non-empty string' },
-            },
-        };
-    }
-
-    if (obj.category.length > 100) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'Product validation failed: "category" must not exceed 100 characters',
-                details: { field: 'category', reason: 'must not exceed 100 characters', length: obj.category.length },
-            },
-        };
-    }
-
     // Validate description field (optional)
     if ('description' in obj && obj.description !== undefined) {
         if (obj.description !== null && typeof obj.description !== 'string') {
@@ -397,7 +363,8 @@ export function validateProduct(data: unknown): ProductServiceResponse<Product> 
             price: obj.price,
             condition: obj.condition as 'New' | 'Used',
             image: obj.image,
-            category: obj.category,
+            category_ids: Array.isArray(obj.category_ids) ? (obj.category_ids as string[]) : [],
+            category_names: Array.isArray(obj.category_names) ? (obj.category_names as string[]) : [],
             description: obj.description as string | undefined,
         },
     };
@@ -417,7 +384,7 @@ export function validateProduct(data: unknown): ProductServiceResponse<Product> 
  * @param row - ProductRow from Supabase database
  * @returns ProductServiceResponse<Product> - Success response with transformed Product, or error response
  */
-export function productRowToProduct(row: ProductRow): ProductServiceResponse<Product> {
+export function productRowToProduct(row: ProductRowWithCategories): ProductServiceResponse<Product> {
     try {
         // Convert NUMERIC to number
         const price = typeof row.price === 'string' ? parseFloat(row.price) : Number(row.price);
@@ -433,6 +400,24 @@ export function productRowToProduct(row: ProductRow): ProductServiceResponse<Pro
             };
         }
 
+        // Extract category IDs and names from junction table join if present
+        const category_ids: string[] = [];
+        const category_names: string[] = [];
+        
+        if (row.product_categories) {
+            row.product_categories.forEach((pc: any) => {
+                if (pc.category_id) category_ids.push(pc.category_id);
+                
+                // Handle both object and array response from Supabase for the joined category
+                const cat = pc.categories || pc.category;
+                const catObj = Array.isArray(cat) ? cat[0] : cat;
+                
+                if (catObj?.name) {
+                    category_names.push(catObj.name);
+                }
+            });
+        }
+
         // Transform database row to Product interface
         const product: Product = {
             id: row.id,
@@ -440,7 +425,8 @@ export function productRowToProduct(row: ProductRow): ProductServiceResponse<Pro
             price: price,
             condition: row.condition,
             image: row.image,
-            category: row.category,
+            category_ids: category_ids,
+            category_names: category_names,
             description: row.description ?? undefined, // null → undefined
         };
 
@@ -598,10 +584,10 @@ export async function fetchProducts(): Promise<ProductServiceResponse<Product[]>
 
         const supabase = createClient();
 
-        // Fetch products (RLS automatically filters by author_id)
+        // Fetch products with their categories (RLS automatically filters by author_id)
         const { data, error } = await supabase
             .from('products')
-            .select('*')
+            .select('*, product_categories(category_id, categories(name))')
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -627,7 +613,7 @@ export async function fetchProducts(): Promise<ProductServiceResponse<Product[]>
         // Transform and validate each product
         const products: Product[] = [];
         for (const row of data) {
-            const transformResult = productRowToProduct(row as ProductRow);
+            const transformResult = productRowToProduct(row as ProductRowWithCategories);
             if (!transformResult.success) {
                 console.error('[fetchProducts] Failed to transform product:', transformResult.error);
                 return transformResult;
@@ -687,10 +673,10 @@ export async function fetchProductById(id: string): Promise<ProductServiceRespon
 
         const supabase = createClient();
 
-        // Fetch single product (RLS automatically filters by author_id)
+        // Fetch single product with categories (RLS automatically filters by author_id)
         const { data, error } = await supabase
             .from('products')
-            .select('*')
+            .select('*, product_categories(category_id, categories(name))')
             .eq('id', id)
             .single();
 
@@ -718,7 +704,7 @@ export async function fetchProductById(id: string): Promise<ProductServiceRespon
         console.log('[fetchProductById] Product found');
 
         // Transform and validate product
-        return productRowToProduct(data as ProductRow);
+        return productRowToProduct(data as ProductRowWithCategories);
     } catch (error) {
         console.error('[fetchProductById] Unexpected error:', error);
         const classified = classifySupabaseError(error);
@@ -736,7 +722,7 @@ export async function fetchProductById(id: string): Promise<ProductServiceRespon
  * The author_id is automatically set from the authenticated user.
  *
  * Validation:
- * - All required fields must be present (name, price, condition, image, category)
+ * - All required fields must be present (name, price, condition, image)
  * - Price must be >= 0
  * - Condition must be 'New' or 'Used'
  * - Image must be a valid URL
@@ -752,7 +738,6 @@ export async function fetchProductById(id: string): Promise<ProductServiceRespon
  *   price: 24.99,
  *   condition: 'New',
  *   image: 'https://example.com/image.jpg',
- *   category: 'Marvel Legends',
  *   description: 'Highly detailed action figure'
  * });
  */
@@ -821,17 +806,6 @@ export async function createProduct(
             };
         }
 
-        if (!input.category || input.category.trim() === '') {
-            return {
-                success: false,
-                error: {
-                    code: 'VALIDATION_ERROR',
-                    message: 'Product category is required',
-                    details: { field: 'category', reason: 'must be a non-empty string' },
-                },
-            };
-        }
-
         const supabase = createClient();
 
         // Get authenticated user
@@ -858,24 +832,21 @@ export async function createProduct(
             price: input.price,
             condition: input.condition,
             image: input.image.trim(),
-            category: input.category.trim(),
             description: input.description?.trim() || null,
             author_id: user.id,
         };
 
         console.log('[createProduct] Inserting product into database');
-        console.log('[createProduct] Insert data:', JSON.stringify(insertData, null, 2));
 
         // Insert product
         const { data, error } = await supabase
             .from('products')
             .insert(insertData)
-            .select()
+            .select('*, product_categories(category_id, categories(name))')
             .single();
 
         if (error) {
             console.error('[createProduct] Supabase error:', error);
-            console.error('[createProduct] Error details:', JSON.stringify(error, null, 2));
             const classified = classifySupabaseError(error);
             return {
                 success: false,
@@ -894,10 +865,32 @@ export async function createProduct(
             };
         }
 
+        // Handle category relationships
+        if (input.category_ids && input.category_ids.length > 0) {
+            const categoryLinks = input.category_ids.map(categoryId => ({
+                product_id: data.id,
+                category_id: categoryId
+            }));
+
+            const { error: linkError } = await supabase
+                .from('product_categories')
+                .insert(categoryLinks);
+
+            if (linkError) {
+                console.error('[createProduct] Failed to link categories:', linkError);
+                // We don't fail the whole request, but we should log it
+            }
+            
+            // Attach them back for the frontend transformation
+            (data as any).product_categories = input.category_ids.map(id => ({ category_id: id }));
+        } else {
+            (data as any).product_categories = [];
+        }
+
         console.log('[createProduct] Product created successfully:', data.id);
 
         // Transform and validate created product
-        return productRowToProduct(data as ProductRow);
+        return productRowToProduct(data as ProductRowWithCategories);
     } catch (error) {
         console.error('[createProduct] Unexpected error:', error);
         const classified = classifySupabaseError(error);
@@ -1026,26 +1019,14 @@ export async function updateProduct(
             }
         }
 
-        if (input.category !== undefined && input.category.trim() === '') {
-            return {
-                success: false,
-                error: {
-                    code: 'VALIDATION_ERROR',
-                    message: 'Product category cannot be empty',
-                    details: { field: 'category', reason: 'must be a non-empty string' },
-                },
-            };
-        }
-
         const supabase = createClient();
 
-        // Prepare update data (only include provided fields)
+        // Prepare update data
         const updateData: Record<string, unknown> = {};
         if (input.name !== undefined) updateData.name = input.name.trim();
         if (input.price !== undefined) updateData.price = input.price;
         if (input.condition !== undefined) updateData.condition = input.condition;
         if (input.image !== undefined) updateData.image = input.image.trim();
-        if (input.category !== undefined) updateData.category = input.category.trim();
         if (input.description !== undefined) {
             updateData.description = input.description ? input.description.trim() : null;
         }
@@ -1057,7 +1038,7 @@ export async function updateProduct(
             .from('products')
             .update(updateData)
             .eq('id', id)
-            .select()
+            .select('*, product_categories(category_id, categories(name))')
             .single();
 
         if (error) {
@@ -1080,10 +1061,43 @@ export async function updateProduct(
             };
         }
 
+        // Handle category relationship updates
+        if (input.category_ids !== undefined) {
+            // 1. Delete existing links
+            await supabase
+                .from('product_categories')
+                .delete()
+                .eq('product_id', id);
+
+            // 2. Insert new links
+            if (input.category_ids.length > 0) {
+                const categoryLinks = input.category_ids.map(categoryId => ({
+                    product_id: id,
+                    category_id: categoryId
+                }));
+
+                await supabase
+                    .from('product_categories')
+                    .insert(categoryLinks);
+                    
+                (data as any).product_categories = input.category_ids.map(cid => ({ category_id: cid }));
+            } else {
+                (data as any).product_categories = [];
+            }
+        } else {
+            // If category_ids wasn't updated, we should fetch the existing ones to return a complete product
+            const { data: existingLinks } = await supabase
+                .from('product_categories')
+                .select('category_id')
+                .eq('product_id', id);
+                
+            (data as any).product_categories = existingLinks || [];
+        }
+
         console.log('[updateProduct] Product updated successfully');
 
         // Transform and validate updated product
-        return productRowToProduct(data as ProductRow);
+        return productRowToProduct(data as ProductRowWithCategories);
     } catch (error) {
         console.error('[updateProduct] Unexpected error:', error);
         const classified = classifySupabaseError(error);

@@ -13,8 +13,10 @@ import { Button } from '@/components/ui/Button';
 import { Product } from '@/types/product';
 import { Badge } from '@/components/ui/Badge';
 import Image from 'next/image';
-import { updateProduct } from '@/lib/services/productService';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { updateProduct, createProduct as createProductService } from '@/lib/services/productService';
+import { Loader2, AlertCircle, DollarSign, Image as ImageIcon, Tag, AlignLeft } from 'lucide-react';
+import { MultiSelect, Option } from '@/components/ui/MultiSelect';
+import { fetchCategories } from '@/app/dashboard/author/categories/actions';
 
 interface EditProductSheetProps {
   product: Product | null;
@@ -32,6 +34,22 @@ export const EditProductSheet = ({
   const [formData, setFormData] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Option[]>([]);
+
+  useEffect(() => {
+    async function loadCategories() {
+      const response = await fetchCategories();
+      if (response.success && Array.isArray(response.data)) {
+        setCategories(
+          response.data.map((cat) => ({
+            label: cat.name,
+            value: cat.id,
+          }))
+        );
+      }
+    }
+    loadCategories();
+  }, []);
 
   useEffect(() => {
     if (product) {
@@ -69,14 +87,25 @@ export const EditProductSheet = ({
     setIsSaving(true);
     setSaveError(null);
 
-    const response = await updateProduct(formData.id, {
-      name: formData.name,
-      price: formData.price,
-      condition: formData.condition,
-      image: formData.image,
-      category: formData.category,
-      description: formData.description,
-    });
+    const isNew = formData.id.startsWith('temp-');
+
+    const response = isNew
+      ? await createProductService({
+        name: formData.name,
+        price: formData.price,
+        condition: formData.condition,
+        image: formData.image,
+        category_ids: formData.category_ids || [],
+        description: formData.description,
+      })
+      : await updateProduct(formData.id, {
+        name: formData.name,
+        price: formData.price,
+        condition: formData.condition,
+        image: formData.image,
+        category_ids: formData.category_ids || [],
+        description: formData.description,
+      });
 
     if (!response.success) {
       setSaveError(response.error.message);
@@ -121,13 +150,16 @@ export const EditProductSheet = ({
             <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
               Product Image
             </label>
-            <div className="relative aspect-video rounded-3xl overflow-hidden bg-zinc-50 border border-zinc-100">
+            <div className="relative aspect-video rounded-3xl overflow-hidden bg-zinc-50 border border-zinc-100 group">
               <Image
                 src={formData.image}
                 alt={formData.name}
                 fill
                 className="object-cover"
               />
+              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <ImageIcon size={24} className="text-white" />
+              </div>
             </div>
             <Input
               name="image"
@@ -143,13 +175,13 @@ export const EditProductSheet = ({
           <div className="space-y-6">
             <div className="space-y-3">
               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                Product Name
+                Categories
               </label>
-              <Input
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="e.g. Marvel Legends Iron Man"
+              <MultiSelect
+                options={categories}
+                selected={formData.category_ids || []}
+                onChange={(selected) => setFormData({ ...formData, category_ids: selected })}
+                placeholder="Select product categories..."
                 disabled={isSaving}
               />
             </div>
@@ -159,14 +191,18 @@ export const EditProductSheet = ({
                 <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                   Price ($)
                 </label>
-                <Input
-                  name="price"
-                  type="number"
-                  value={formData.price}
-                  onChange={handleChange}
-                  placeholder="29.99"
-                  disabled={isSaving}
-                />
+                <div className="relative">
+                  <DollarSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+                  <Input
+                    name="price"
+                    type="number"
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder="29.99"
+                    className="pl-10"
+                    disabled={isSaving}
+                  />
+                </div>
               </div>
               <div className="space-y-3">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
@@ -187,13 +223,28 @@ export const EditProductSheet = ({
 
             <div className="space-y-3">
               <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                Category
+                Product Name
               </label>
               <Input
-                name="category"
-                value={formData.category}
+                name="name"
+                value={formData.name}
                 onChange={handleChange}
-                placeholder="e.g. Marvel Legends"
+                placeholder="e.g. Marvel Legends Iron Man"
+                disabled={isSaving}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-2">
+                <AlignLeft size={12} />
+                Description (Optional)
+              </label>
+              <textarea
+                name="description"
+                value={formData.description || ''}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Add a detailed description..."
+                className="w-full min-h-[120px] px-4 py-3 rounded-2xl border border-zinc-200 bg-zinc-50 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent resize-y disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isSaving}
               />
             </div>

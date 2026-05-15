@@ -15,6 +15,9 @@ import {
 } from '@/components/ui/dialog';
 import { Product } from '@/types/product';
 import { fetchProductById, updateProduct } from '@/lib/services/productService';
+import { MultiSelect, Option } from '@/components/ui/MultiSelect';
+import { fetchCategories } from '@/app/dashboard/author/categories/actions';
+import { Category } from '@/lib/types/category';
 
 export default function EditProductPage() {
     const router = useRouter();
@@ -27,26 +30,42 @@ export default function EditProductPage() {
     const [error, setError] = useState<string | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+    const [availableCategories, setAvailableCategories] = useState<Option[]>([]);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
     // Fetch product on mount
     useEffect(() => {
-        async function loadProduct() {
+        async function loadData() {
             setIsLoading(true);
             setError(null);
 
-            const response = await fetchProductById(productId);
+            // Fetch categories and product in parallel
+            const [productResponse, categoriesResponse] = await Promise.all([
+                fetchProductById(productId),
+                fetchCategories()
+            ]);
 
-            if (!response.success) {
-                setError(response.error.message);
+            if (categoriesResponse.success && Array.isArray(categoriesResponse.data)) {
+                setAvailableCategories(
+                    categoriesResponse.data.map((cat) => ({
+                        label: cat.name,
+                        value: cat.id,
+                    }))
+                );
+            }
+            setIsLoadingCategories(false);
+
+            if (!productResponse.success) {
+                setError(productResponse.error.message);
                 setIsLoading(false);
                 return;
             }
 
-            setFormData(response.data);
+            setFormData(productResponse.data);
             setIsLoading(false);
         }
 
-        loadProduct();
+        loadData();
     }, [productId]);
 
     // Loading state
@@ -103,8 +122,8 @@ export default function EditProductPage() {
             setSaveError('Price must be greater than 0');
             return;
         }
-        if (!formData.category.trim()) {
-            setSaveError('Category is required');
+        if (!formData.category_ids || formData.category_ids.length === 0) {
+            setSaveError('At least one category is required');
             return;
         }
         if (!formData.image.trim()) {
@@ -120,7 +139,7 @@ export default function EditProductPage() {
             price: formData.price,
             condition: formData.condition,
             image: formData.image,
-            category: formData.category,
+            category_ids: formData.category_ids || [],
             description: formData.description,
         });
 
@@ -270,18 +289,15 @@ export default function EditProductPage() {
 
                             <div className="space-y-3">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                                    Category
+                                    Categories
                                 </label>
-                                <div className="relative">
-                                    <Tag size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
-                                    <Input
-                                        value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        placeholder="e.g. Marvel Legends"
-                                        className="pl-10 h-12"
-                                        disabled={isSaving}
-                                    />
-                                </div>
+                                <MultiSelect
+                                    options={availableCategories}
+                                    selected={formData.category_ids || []}
+                                    onChange={(selected) => setFormData({ ...formData, category_ids: selected })}
+                                    placeholder="Select product categories..."
+                                    disabled={isSaving || isLoadingCategories}
+                                />
                             </div>
 
                             <div className="space-y-3">
@@ -314,7 +330,10 @@ export default function EditProductPage() {
                             </div>
                             <div className="space-y-2">
                                 <Badge variant="secondary" className="text-xs">
-                                    {formData.category}
+                                    {formData.category_ids && formData.category_ids.length > 0 
+                                        ? availableCategories.find(c => c.value === formData.category_ids![0])?.label
+                                        : 'Uncategorized'}
+                                    {formData.category_ids && formData.category_ids.length > 1 && ` +${formData.category_ids.length - 1}`}
                                 </Badge>
                                 <h4 className="font-bold text-zinc-900 leading-tight line-clamp-2 text-lg">
                                     {formData.name}

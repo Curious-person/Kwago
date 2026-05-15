@@ -35,9 +35,22 @@ export const ProductManageCard = ({ product, onEdit, onDelete }: ProductManageCa
 
       <div className="flex flex-col p-6 flex-1">
         <div className="flex justify-between items-start mb-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-            {product.category}
-          </p>
+          <div className="flex flex-wrap gap-1">
+            {product.category_names && product.category_names.length > 0 ? (
+              product.category_names.map((name, index) => (
+                <span 
+                  key={index}
+                  className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 bg-zinc-50 px-1.5 py-0.5 rounded"
+                >
+                  {name}
+                </span>
+              ))
+            ) : (
+              <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                {product.category}
+              </p>
+            )}
+          </div>
           <p className="text-sm font-bold text-zinc-900">
             ${product.price.toLocaleString()}
           </p>

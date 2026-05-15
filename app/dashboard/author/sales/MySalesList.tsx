@@ -71,7 +71,7 @@ export function MySalesList({ initialSales }: MySalesListProps) {
 
   const filteredSales = sales.filter((s) => 
     s.product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.product.category.toLowerCase().includes(searchQuery.toLowerCase())
+    s.product.category_names?.some(name => name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const totalRevenue = sales.reduce((acc, sale) => acc + sale.totalRevenue, 0);
@@ -196,7 +196,11 @@ export function MySalesList({ initialSales }: MySalesListProps) {
                   <TableCell>
                     <div className="flex flex-col gap-0.5">
                       <span className="font-bold text-zinc-900 line-clamp-1">{sale.product.name}</span>
-                      <span className="text-xs text-zinc-400">{sale.product.category}</span>
+                      <span className="text-xs text-zinc-400">
+                        {sale.product.category_names && sale.product.category_names.length > 0
+                          ? sale.product.category_names.join(', ')
+                          : 'Uncategorized'}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>

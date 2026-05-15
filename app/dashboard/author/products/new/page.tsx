@@ -15,6 +15,9 @@ import {
 } from '@/components/ui/dialog';
 import { Product } from '@/types/product';
 import { createProduct } from '@/lib/services/productService';
+import { MultiSelect } from '@/components/ui/MultiSelect';
+import { fetchCategories } from '@/app/dashboard/author/categories/actions';
+import { Category } from '@/lib/types/category';
 
 export default function NewProductPage() {
     const router = useRouter();
@@ -31,6 +34,30 @@ export default function NewProductPage() {
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
     const [createdProduct, setCreatedProduct] = useState<Product | null>(null);
+    const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+
+    // Fetch categories on mount
+    React.useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const response = await fetchCategories();
+                if (response.success && response.data) {
+                    setAvailableCategories(response.data as Category[]);
+                }
+            } catch (err) {
+                console.error('Failed to load categories:', err);
+            } finally {
+                setIsLoadingCategories(false);
+            }
+        };
+        loadCategories();
+    }, []);
+
+    const categoryOptions = availableCategories.map(cat => ({
+        label: cat.name,
+        value: cat.id
+    }));
 
     const handleConditionToggle = () => {
         setFormData((prev) => ({
@@ -49,8 +76,8 @@ export default function NewProductPage() {
             setCreateError('Price must be greater than 0');
             return;
         }
-        if (!formData.category.trim()) {
-            setCreateError('Category is required');
+        if (!formData.category_ids || formData.category_ids.length === 0) {
+            setCreateError('At least one category is required');
             return;
         }
         if (!formData.image.trim()) {
@@ -62,13 +89,13 @@ export default function NewProductPage() {
         setCreateError(null);
 
         const response = await createProduct({
-            name: formData.name,
-            price: formData.price,
-            condition: formData.condition,
-            image: formData.image,
-            category: formData.category,
-            description: formData.description,
-        });
+        name: formData.name,
+        price: formData.price,
+        condition: formData.condition,
+        image: formData.image,
+        category_ids: formData.category_ids,
+        description: formData.description,
+      });
 
         if (!response.success) {
             setCreateError(response.error.message);
@@ -216,18 +243,15 @@ export default function NewProductPage() {
 
                             <div className="space-y-3">
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                                    Category
+                                    Categories
                                 </label>
-                                <div className="relative">
-                                    <Tag size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
-                                    <Input
-                                        value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        placeholder="e.g. Marvel Legends"
-                                        className="pl-10 h-12"
-                                        disabled={isCreating}
-                                    />
-                                </div>
+                                <MultiSelect
+                                    options={categoryOptions}
+                                    selected={formData.category_ids || []}
+                                    onChange={(selected) => setFormData({ ...formData, category_ids: selected })}
+                                    placeholder="Select product categories..."
+                                    disabled={isCreating || isLoadingCategories}
+                                />
                             </div>
 
                             <div className="space-y-3">
@@ -260,7 +284,10 @@ export default function NewProductPage() {
                             </div>
                             <div className="space-y-2">
                                 <Badge variant="secondary" className="text-xs">
-                                    {formData.category || 'Uncategorized'}
+                                    {formData.category_ids && formData.category_ids.length > 0 
+                                        ? availableCategories.find(c => c.id === formData.category_ids![0])?.name
+                                        : 'Uncategorized'}
+                                    {formData.category_ids && formData.category_ids.length > 1 && ` +${formData.category_ids.length - 1}`}
                                 </Badge>
                                 <h4 className="font-bold text-zinc-900 leading-tight line-clamp-2 text-lg">
                                     {formData.name || 'Untitled Product'}

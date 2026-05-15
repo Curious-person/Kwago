@@ -33,7 +33,9 @@ export const ProductCard = ({ product, onViewDetails }: ProductCardProps) => {
 
       <div className="flex flex-col flex-1">
         <p className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-2">
-          {product.category}
+          {product.category_names && product.category_names.length > 0 
+            ? product.category_names.join(', ') 
+            : 'Uncategorized'}
         </p>
         <h3 className="text-xl font-bold text-zinc-900 mb-2 leading-tight group-hover:text-[#0066FF] transition-colors line-clamp-2 min-h-[3.5rem]">
           {product.name}
