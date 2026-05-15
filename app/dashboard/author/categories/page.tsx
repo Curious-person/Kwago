@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Category, Notification, ModalState } from '@/lib/types/category';
 import { MOCK_CATEGORIES } from '@/lib/data/mockCategories';
@@ -10,6 +10,17 @@ import { CreateCategoryModal } from '@/components/dashboard/CreateCategoryModal'
 import { EditCategoryModal } from '@/components/dashboard/EditCategoryModal';
 import { DeleteConfirmationModal } from '@/components/dashboard/DeleteConfirmationModal';
 import { Notification as NotificationComponent } from '@/components/dashboard/Notification';
+import { LoadingState } from '@/components/dashboard/LoadingState';
+import { ErrorState } from '@/components/dashboard/ErrorState';
+import {
+    getCachedCategories,
+    saveCategoriesToCache,
+    updateCategoryInCache,
+    addCategoryToCache,
+    removeCategoryFromCache,
+    isCacheStale,
+    getCacheAge,
+} from '@/lib/services/categoryCache';
 
 /**
  * CategoryManager Page Component
@@ -27,6 +38,7 @@ export default function CategoryManagerPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isRetrying, setIsRetrying] = useState(false);
     const [notification, setNotification] = useState<Notification | null>(null);
 
     // Modal states
@@ -38,30 +50,108 @@ export default function CategoryManagerPage() {
         categoryToDelete: null,
     });
 
-    // Load categories on mount
+    // Load categories on mount with caching
     useEffect(() => {
         loadCategories();
+
+        // Set up background refresh if cache is stale
+        const checkAndRefreshCache = () => {
+            if (isCacheStale()) {
+                console.log('Cache is stale, refreshing in background...');
+                loadCategories(true); // Force refresh in background
+            }
+        };
+
+        // Check cache staleness every minute
+        const refreshInterval = setInterval(checkAndRefreshCache, 60 * 1000);
+
+        return () => clearInterval(refreshInterval);
     }, []);
 
     /**
      * API_INTEGRATION_POINT_1: Fetch categories
      * Replace with: const response = await fetch('/api/categories');
      * Expected response: { categories: Category[] }
+     *
+     * Performance optimization: Uses local caching to reduce API calls
+     * Requirements: 14.4, 14.5
      */
-    const loadCategories = useCallback(async () => {
+    const loadCategories = useCallback(async (backgroundRefresh = false) => {
         try {
-            setIsLoading(true);
+            if (!backgroundRefresh) {
+                setIsLoading(true);
+            }
             setError(null);
+            setIsRetrying(false);
+
+            // Check cache first (unless forcing refresh)
+            if (!backgroundRefresh) {
+                const cachedCategories = getCachedCategories();
+                if (cachedCategories) {
+                    console.log('Using cached categories for initial display');
+                    setCategories(cachedCategories);
+
+                    // Show cache age in console for debugging
+                    const cacheAge = getCacheAge();
+                    if (cacheAge !== null) {
+                        console.log(`Cache age: ${cacheAge} seconds`);
+                    }
+
+                    // Still fetch fresh data in background if cache is stale
+                    if (isCacheStale()) {
+                        console.log('Cache is stale, fetching fresh data in background...');
+                        setTimeout(() => loadCategories(true), 100); // Small delay to prioritize UI
+                    }
+
+                    if (!backgroundRefresh) {
+                        setIsLoading(false);
+                    }
+                    return;
+                }
+            }
 
             // Mock data - replace with API call
+            // Simulate network delay (shorter for background refresh)
+            const delay = backgroundRefresh ? 100 : 500;
+            await new Promise(resolve => setTimeout(resolve, delay));
+
             const mockCategories = MOCK_CATEGORIES;
 
+            // Update state
             setCategories(mockCategories);
+
+            // Save to cache
+            saveCategoriesToCache(mockCategories);
+
+            // Show success notification for background refresh
+            if (backgroundRefresh) {
+                console.log('Background refresh completed, cache updated');
+            }
         } catch (err) {
-            setError('Failed to load categories. Please try again.');
+            // Handle different error types
+            let errorMessage = 'Failed to load categories. Please try again.';
+
+            if (err instanceof TypeError && err.message.includes('fetch')) {
+                errorMessage = 'Network error. Please check your connection and try again.';
+            } else if (err instanceof Error) {
+                if (err.message.includes('401') || err.message.includes('Unauthorized')) {
+                    errorMessage = 'You are not authorized to view categories.';
+                } else if (err.message.includes('404') || err.message.includes('Not Found')) {
+                    errorMessage = 'Categories not found.';
+                } else if (err.message.includes('500') || err.message.includes('Server')) {
+                    errorMessage = 'Server error. Please try again later.';
+                }
+            }
+
+            // Only show error if not a background refresh
+            if (!backgroundRefresh) {
+                setError(errorMessage);
+            }
             console.error('Error loading categories:', err);
         } finally {
-            setIsLoading(false);
+            if (!backgroundRefresh) {
+                setIsLoading(false);
+            }
         }
     }, []);
 
@@ -69,6 +159,9 @@ export default function CategoryManagerPage() {
      * API_INTEGRATION_POINT_2: Create category
      * Replace with: const response = await fetch('/api/categories', { method: 'POST', ... });
      * Expected response: { id, name, description, author_id, product_count, product_images, created_at, updated_at }
+     *
+     * Performance optimization: Updates local cache after creation
+     * Requirements: 14.2, 14.4
      */
     const handleCreateCategory = useCallback(
         async (name: string, description: string | undefined) => {
@@ -84,7 +177,12 @@ export default function CategoryManagerPage() {
                     updated_at: new Date().toISOString(),
                 };
 
+                // Update state
                 setCategories([...categories, newCategory]);
+
+                // Update cache
+                addCategoryToCache(newCategory);
+
                 setModals(prev => ({ ...prev, isCreateModalOpen: false }));
                 setNotification({
                     type: 'success',
@@ -106,17 +204,34 @@ export default function CategoryManagerPage() {
      * API_INTEGRATION_POINT_3: Update category
      * Replace with: const response = await fetch(`/api/categories/${id}`, { method: 'PUT', ... });
      * Expected response: { id, name, description, author_id, product_count, product_images, created_at, updated_at }
+     *
+     * Performance optimization: Updates local cache after update
+     * Requirements: 14.2, 14.4
      */
     const handleUpdateCategory = useCallback(
         async (id: string, name: string, description: string | undefined) => {
             try {
+                const updatedCategory: Category = {
+                    id,
+                    name,
+                    description,
+                    author_id: 'user-123',
+                    product_count: categories.find(cat => cat.id === id)?.product_count || 0,
+                    product_images: categories.find(cat => cat.id === id)?.product_images || [],
+                    created_at: categories.find(cat => cat.id === id)?.created_at || new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                };
+
+                // Update state
                 setCategories(
                     categories.map(cat =>
-                        cat.id === id
-                            ? { ...cat, name, description, updated_at: new Date().toISOString() }
-                            : cat
+                        cat.id === id ? updatedCategory : cat
                     )
                 );
+
+                // Update cache
+                updateCategoryInCache(updatedCategory);
+
                 setModals(prev => ({ ...prev, isEditModalOpen: false, editingCategory: null }));
                 setNotification({
                     type: 'success',
@@ -138,11 +253,19 @@ export default function CategoryManagerPage() {
      * API_INTEGRATION_POINT_4: Delete category
      * Replace with: const response = await fetch(`/api/categories/${id}`, { method: 'DELETE' });
      * Expected response: { success: true }
+     *
+     * Performance optimization: Updates local cache after deletion
+     * Requirements: 14.2, 14.4
      */
     const handleDeleteCategory = useCallback(
         async (id: string) => {
             try {
+                // Update state
                 setCategories(categories.filter(cat => cat.id !== id));
+
+                // Update cache
+                removeCategoryFromCache(id);
+
                 setModals(prev => ({ ...prev, isDeleteModalOpen: false, categoryToDelete: null }));
                 setNotification({
                     type: 'success',
@@ -219,42 +342,20 @@ export default function CategoryManagerPage() {
     }, []);
 
     // Retry loading
-    const handleRetry = useCallback(() => {
-        loadCategories();
+    const handleRetry = useCallback(async () => {
+        setIsRetrying(true);
+        await loadCategories();
+        setIsRetrying(false);
     }, [loadCategories]);
 
     // Show loading state
     if (isLoading) {
-        return (
-            <div className="flex-1 p-8">
-                <div className="animate-pulse space-y-8">
-                    <div className="h-12 bg-zinc-200 rounded-full w-48"></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="h-64 bg-zinc-200 rounded-3xl"></div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
+        return <LoadingState count={3} />;
     }
 
     // Show error state
     if (error) {
-        return (
-            <div className="flex-1 p-8">
-                <div className="text-center py-12">
-                    <h2 className="text-2xl font-bold text-zinc-900 mb-4">Failed to load categories</h2>
-                    <p className="text-zinc-600 mb-8">{error}</p>
-                    <button
-                        onClick={handleRetry}
-                        className="px-6 py-2.5 bg-[#0066FF] text-white rounded-full shadow-[0_4px_0_0_#0047B3] hover:bg-[#0052CC] active:translate-y-[2px] active:shadow-[0_2px_0_0_#0047B3] transition-all"
-                    >
-                        Retry
-                    </button>
-                </div>
-            </div>
-        );
+        return <ErrorState error={error} onRetry={handleRetry} isRetrying={isRetrying} />;
     }
 
     return (
@@ -291,14 +392,16 @@ export default function CategoryManagerPage() {
                 onConfirm={handleDeleteCategory}
             />
 
-            {/* Notification */}
+            {/* Notification with aria-live region */}
             {notification && (
-                <NotificationComponent
-                    type={notification.type}
-                    message={notification.message}
-                    onDismiss={dismissNotification}
-                    duration={notification.duration}
-                />
+                <div aria-live="polite" aria-atomic="true" role="status">
+                    <NotificationComponent
+                        type={notification.type}
+                        message={notification.message}
+                        onDismiss={dismissNotification}
+                        duration={notification.duration}
+                    />
+                </div>
             )}
         </div>
     );

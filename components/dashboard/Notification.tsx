@@ -44,13 +44,14 @@ export const Notification: React.FC<NotificationProps> = ({
             className={`fixed top-6 right-6 z-50 flex items-start gap-4 p-4 rounded-lg border ${bgColor} ${borderColor} max-w-sm animate-in fade-in slide-in-from-top-2 duration-200`}
             role="alert"
             aria-live="polite"
+            aria-atomic="true"
         >
             <Icon size={20} className={`flex-shrink-0 mt-0.5 ${iconColor}`} />
             <p className={`text-sm font-medium ${textColor} flex-1`}>{message}</p>
             {type === 'error' && (
                 <button
                     onClick={onDismiss}
-                    className={`flex-shrink-0 ${textColor} hover:opacity-70 transition-opacity`}
+                    className={`flex-shrink-0 ${textColor} hover:opacity-70 transition-opacity focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0066FF] rounded p-1`}
                     aria-label="Dismiss notification"
                 >
                     <X size={18} />
