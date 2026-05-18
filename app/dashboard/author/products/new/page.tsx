@@ -26,7 +26,7 @@ export default function NewProductPage() {
         name: '',
         price: 0,
         condition: 'New',
-        category: '',
+        category_ids: [],
         image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop',
     });
 

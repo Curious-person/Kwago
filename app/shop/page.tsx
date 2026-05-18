@@ -20,60 +20,63 @@ import {
   SheetDescription,
 } from '@/components/ui/Sheet';
 
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: '1',
-    name: 'Marvel Legends Series Iron Man Mark LXXXV',
-    price: 24.99,
-    condition: 'New',
-    category: 'Marvel Legends',
-    image: 'https://images.unsplash.com/photo-1531279554141-7dfdb443c375?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    id: '2',
-    name: 'The Lord of the Rings: Witch-King of Angmar Statue',
-    price: 499.00,
-    condition: 'New',
-    category: 'Weta Workshop',
-    image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    id: '3',
-    name: 'Spider-Man: Across the Spider-Verse Gwen Stacy',
-    price: 19.99,
-    condition: 'Used',
-    category: 'Marvel Legends',
-    image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    id: '4',
-    name: 'Balrog, Flame of Udûn Statue',
-    price: 899.00,
-    condition: 'New',
-    category: 'Weta Workshop',
-    image: 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    id: '5',
-    name: 'Captain America Shield Prop Replica',
-    price: 149.00,
-    condition: 'New',
-    category: 'Props',
-    image: 'https://images.unsplash.com/photo-1626278664285-f7c8a8107e93?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    id: '6',
-    name: 'Wolverine (Astonishing X-Men) Retro Figure',
-    price: 34.99,
-    condition: 'Used',
-    category: 'Marvel Legends',
-    image: 'https://images.unsplash.com/photo-1591117207239-788db8ec6c3b?q=80&w=800&auto=format&fit=crop'
-  }
-];
+import { fetchProducts } from '@/lib/services/productService';
+import { fetchCategories } from '@/app/dashboard/author/categories/actions';
+import { Category } from '@/lib/types/category';
+import { MultiSelect, Option } from '@/components/ui/MultiSelect';
+import { useCollectionActions } from '@/lib/hooks/useCollection';
+
+// Fallback image for products without a valid image URL
+const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?q=80&w=800&auto=format&fit=crop';
 
 export default function ShopPage() {
+  const { addToCollection } = useCollectionActions();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  React.useEffect(() => {
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const [productsResult, categoriesResult] = await Promise.all([
+          fetchProducts(),
+          fetchCategories()
+        ]);
+
+        if (productsResult.success) {
+          setProducts(productsResult.data);
+        }
+        
+        if (categoriesResult.success && categoriesResult.data) {
+          setAvailableCategories(categoriesResult.data as Category[]);
+        }
+      } catch (error) {
+        console.error('Unexpected error loading shop data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
+
+  const categoryOptions: Option[] = availableCategories.map(cat => ({
+    label: cat.name,
+    value: cat.id
+  }));
+
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategories = selectedCategoryIds.length === 0 || 
+      (product.category_ids && product.category_ids.some(id => selectedCategoryIds.includes(id)));
+    
+    return matchesSearch && matchesCategories;
+  });
 
   const handleViewDetails = (product: Product) => {
     setSelectedProduct(product);
@@ -98,43 +101,86 @@ export default function ShopPage() {
                 </p>
               </div>
               
-              <div className="flex items-center gap-3">
-                <div className="w-64">
+              <div className="flex flex-col md:flex-row items-center gap-4">
+                <div className="w-full md:w-64">
                   <Input 
                     placeholder="Search collectibles..." 
                     icon={<Search size={16} />}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <button className="h-10 w-10 flex items-center justify-center rounded-full border border-zinc-100 hover:bg-zinc-50 transition-colors">
-                  <Filter size={18} className="text-zinc-500" />
-                </button>
+                <div className="w-full md:w-48">
+                  <MultiSelect
+                    options={categoryOptions}
+                    selected={selectedCategoryIds}
+                    onChange={setSelectedCategoryIds}
+                    placeholder="Filters"
+                    variant="count"
+                  />
+                </div>
               </div>
             </div>
           </ScrollReveal>
 
           {/* Product Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-            {MOCK_PRODUCTS.map((product, idx) => (
-              <ScrollReveal key={product.id} delay={idx * 50}>
-                <ProductCard 
-                  product={product} 
-                  onViewDetails={handleViewDetails}
-                />
-              </ScrollReveal>
-            ))}
-          </div>
-          
-          {/* Empty State / Pagination */}
-          <ScrollReveal delay={400}>
-            <div className="flex flex-col items-center mt-32">
-              <p className="text-zinc-400 text-sm font-medium mb-10">
-                Showing {MOCK_PRODUCTS.length} of 142 collectibles
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="aspect-square bg-zinc-100 rounded-3xl mb-6" />
+                  <div className="h-4 bg-zinc-100 rounded w-1/4 mb-4" />
+                  <div className="h-6 bg-zinc-100 rounded w-3/4 mb-2" />
+                  <div className="h-4 bg-zinc-100 rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : filteredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+              {filteredProducts.map((product, idx) => (
+                <ScrollReveal key={product.id} delay={idx * 50}>
+                  <ProductCard 
+                    product={product} 
+                    onViewDetails={handleViewDetails}
+                  />
+                </ScrollReveal>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <ShoppingBag size={48} className="text-zinc-200 mb-6" />
+              <h3 className="text-xl font-bold text-zinc-900 mb-2">No collectibles found</h3>
+              <p className="text-zinc-500 max-w-xs">
+                We couldn&apos;t find any products matching your search &quot;{searchTerm}&quot; or the selected categories.
               </p>
-              <Button variant="outline" className="px-12">
-                Load More Items
+              <Button 
+                variant="ghost" 
+                className="mt-4 text-[#0066FF]"
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedCategoryIds([]);
+                }}
+              >
+                Clear all filters
               </Button>
             </div>
-          </ScrollReveal>
+          )}
+          
+          {/* Empty State / Pagination */}
+          {!isLoading && filteredProducts.length > 0 && (
+            <ScrollReveal delay={400}>
+              <div className="flex flex-col items-center mt-32">
+                <p className="text-zinc-400 text-sm font-medium mb-10">
+                  Showing {filteredProducts.length} of {products.length} collectibles
+                </p>
+                {products.length > filteredProducts.length && (
+                  <Button variant="outline" className="px-12">
+                    Load More Items
+                  </Button>
+                )}
+              </div>
+            </ScrollReveal>
+          )}
         </main>
 
         {/* Side Panel for Details */}
@@ -146,14 +192,16 @@ export default function ShopPage() {
                   <SheetHeader className="mb-8">
                     <div className="flex items-center gap-2 mb-4">
                       <Badge variant="secondary" className="rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest">
-                        {selectedProduct.category}
+                        {selectedProduct.category_names && selectedProduct.category_names.length > 0 
+                          ? selectedProduct.category_names[0] 
+                          : 'Uncategorized'}
                       </Badge>
                       <ChevronRight size={12} className="text-zinc-300" />
                       <Badge variant={selectedProduct.condition === 'New' ? 'default' : 'secondary'} className="rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest">
                         {selectedProduct.condition}
                       </Badge>
                     </div>
-                    <SheetTitle>{selectedProduct.name}</SheetTitle>
+                    <SheetTitle className="text-3xl font-bold leading-tight">{selectedProduct.name}</SheetTitle>
                     <SheetDescription className="text-2xl font-medium text-zinc-900 mt-2">
                       ${selectedProduct.price.toLocaleString()}
                     </SheetDescription>
@@ -161,7 +209,7 @@ export default function ShopPage() {
 
                   <div className="relative aspect-square rounded-3xl overflow-hidden mb-10 bg-zinc-50 border border-zinc-100">
                     <Image 
-                      src={selectedProduct.image} 
+                      src={selectedProduct.image || DEFAULT_PRODUCT_IMAGE} 
                       alt={selectedProduct.name} 
                       fill 
                       className="object-cover" 
@@ -172,9 +220,7 @@ export default function ShopPage() {
                     <div>
                       <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 mb-4">Description</h4>
                       <p className="text-zinc-500 leading-relaxed">
-                        This premium {selectedProduct.name} represents the pinnacle of collectible design. 
-                        Each piece is meticulously crafted with attention to detail that satisfies even the most discerning collectors.
-                        Perfect for display or as a centerpiece of your growing collection.
+                        {selectedProduct.description || `This premium ${selectedProduct.name} represents the pinnacle of collectible design. Each piece is meticulously crafted with attention to detail that satisfies even the most discerning collectors.`}
                       </p>
                     </div>
 
@@ -184,8 +230,12 @@ export default function ShopPage() {
                         <p className="text-zinc-900 font-medium">{selectedProduct.condition}</p>
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2">Category</h4>
-                        <p className="text-zinc-900 font-medium">{selectedProduct.category}</p>
+                        <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2">Categories</h4>
+                        <p className="text-zinc-900 font-medium">
+                          {selectedProduct.category_names && selectedProduct.category_names.length > 0 
+                            ? selectedProduct.category_names.join(', ') 
+                            : 'Uncategorized'}
+                        </p>
                       </div>
                     </div>
 
@@ -204,7 +254,11 @@ export default function ShopPage() {
                 </div>
 
                 <div className="pt-10 mt-auto border-t border-zinc-100 flex gap-4">
-                  <Button variant="primary" className="flex-1 h-14 text-base font-bold">
+                  <Button 
+                    variant="primary" 
+                    className="flex-1 h-14 text-base font-bold"
+                    onClick={() => addToCollection(selectedProduct.id)}
+                  >
                     <ShoppingBag size={20} className="mr-2" />
                     Add to Collection
                   </Button>

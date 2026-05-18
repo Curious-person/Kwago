@@ -23,8 +23,25 @@ export const SmoothScroll = ({ children }: { children: React.ReactNode }) => {
 
     requestAnimationFrame(raf);
 
+    // Create an observer to pause Lenis when a modal is open
+    // Modals typically set overflow: hidden on the body
+    const observer = new MutationObserver(() => {
+      const isLocked = document.body.style.overflow === 'hidden';
+      if (isLocked) {
+        lenis.stop();
+      } else {
+        lenis.start();
+      }
+    });
+
+    observer.observe(document.body, { 
+      attributes: true, 
+      attributeFilter: ['style'] 
+    });
+
     return () => {
       lenis.destroy();
+      observer.disconnect();
     };
   }, []);
 

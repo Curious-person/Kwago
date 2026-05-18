@@ -31,6 +31,7 @@ interface MultiSelectProps {
     placeholder?: string;
     className?: string;
     disabled?: boolean;
+    variant?: 'tags' | 'count';
 }
 
 export function MultiSelect({
@@ -40,6 +41,7 @@ export function MultiSelect({
     placeholder = 'Select options...',
     className,
     disabled = false,
+    variant = 'tags',
 }: MultiSelectProps) {
     const [open, setOpen] = React.useState(false);
     const [search, setSearch] = React.useState('');
@@ -66,8 +68,15 @@ export function MultiSelect({
                         )}
                         disabled={disabled}
                     >
-                        <div className="flex flex-wrap gap-1.5 items-center text-left">
-                            {selected.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 items-center text-left">
+                            {variant === 'count' && selected.length > 0 ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0066FF] text-[10px] font-bold text-white">
+                                        {selected.length}
+                                    </div>
+                                    <span className="text-sm font-bold text-zinc-900">{placeholder}</span>
+                                </div>
+                            ) : selected.length > 0 ? (
                                 selected.map((value) => {
                                     const option = options.find((o) => o.value === value);
                                     return (

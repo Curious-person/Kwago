@@ -1,164 +1,19 @@
-'use client';
-
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { MoreHorizontal, Plus, Search, Eye, Edit, Trash2 } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
+import React from 'react';
+import Link from 'next/link';
+import { Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { requireRole } from '@/lib/auth';
+import { fetchAuthorPosts } from '@/lib/services/postService.server';
+import AuthorPostsTable from '@/components/blog/AuthorPostsTable';
 
-import { useRouter } from 'next/navigation';
+export default async function AuthorPostsPage() {
+  // 1. Authenticate user on server side before rendering anything
+  await requireRole(['author', 'admin']);
 
-// Sample data based on app/blog/[slug]/page.tsx
-const INITIAL_POSTS = [
-  {
-    id: "1",
-    title: "The Art of Intentional Digital Consumption",
-    category: "Design",
-    date: "Oct 24, 2024",
-    image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=800&auto=format&fit=crop",
-    author: "Elena Vance",
-    status: "Published"
-  },
-  {
-    id: "2",
-    title: "Finding Silence in Architecture",
-    category: "Architecture",
-    date: "Oct 21, 2024",
-    image: "https://images.unsplash.com/photo-1518005020250-685949320299?q=80&w=800&auto=format&fit=crop",
-    author: "Elena Vance",
-    status: "Published"
-  },
-  {
-    id: "3",
-    title: "The Future of Calm UI",
-    category: "Technology",
-    date: "Oct 19, 2024",
-    image: "https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=800&auto=format&fit=crop",
-    author: "Elena Vance",
-    status: "Draft"
-  }
-];
-
-import { DataTable, ColumnDef } from '@/components/ui/data-table';
-
-export default function AuthorPostsPage() {
-  const router = useRouter();
-  const [posts] = useState(INITIAL_POSTS);
-
-  const columns = React.useMemo<ColumnDef<typeof INITIAL_POSTS[0]>[]>(() => [
-    {
-      header: 'Photo',
-      accessorKey: 'image',
-      headerClassName: 'w-[100px]',
-      cell: (row) => (
-        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-zinc-100 border border-zinc-200">
-          <Image src={row.image} alt={row.title} fill className="object-cover" />
-        </div>
-      ),
-    },
-    {
-      header: 'Post Details',
-      filterable: true,
-      filterValue: (row) => `${row.title} ${row.author}`,
-      cell: (row) => (
-        <div className="flex flex-col gap-0.5">
-          <span className="font-bold text-zinc-900 line-clamp-1">{row.title}</span>
-          <span className="text-xs text-zinc-400">by {row.author}</span>
-        </div>
-      ),
-    },
-    {
-      header: 'Category',
-      accessorKey: 'category',
-      filterable: true,
-      cell: (row) => (
-        <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
-          {row.category}
-        </Badge>
-      ),
-    },
-    {
-      header: 'Date',
-      accessorKey: 'date',
-      cell: (row) => <span className="text-zinc-500 text-sm font-medium">{row.date}</span>,
-    },
-    {
-      header: 'Status',
-      accessorKey: 'status',
-      filterable: true,
-      cell: (row) => (
-        <div className="flex items-center gap-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${row.status === 'Published' ? 'bg-[#0066FF]' : 'bg-zinc-300'}`} />
-          <span className={`text-xs font-bold ${row.status === 'Published' ? 'text-zinc-900' : 'text-zinc-400'}`}>
-            {row.status}
-          </span>
-        </div>
-      ),
-    },
-    {
-      header: 'Actions',
-      className: 'text-right',
-      headerClassName: 'text-right',
-      cell: (row) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger render={
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-zinc-100" />
-          }>
-            <MoreHorizontal size={16} className="text-zinc-400" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="rounded-2xl w-48 p-2">
-            <DropdownMenuGroup>
-              <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">Options</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-zinc-100" />
-              <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer">
-                <Eye size={14} className="text-zinc-400" />
-                <span className="font-medium">View Post</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2 px-3 py-2 rounded-xl cursor-pointer"
-                onClick={() => router.push(`/dashboard/author/posts/${row.id}/edit`)}
-              >
-                <Edit size={14} className="text-zinc-400" />
-                <span className="font-medium">Edit Content</span>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator className="bg-zinc-100" />
-            <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer text-red-500 hover:text-red-600 hover:bg-red-50 focus:bg-red-50">
-              <Trash2 size={14} />
-              <span className="font-medium">Delete Post</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
-  ], [router]);
+  // 2. Fetch author posts directly from database
+  const response = await fetchAuthorPosts();
+  const posts = response.success && response.data ? response.data : [];
 
   return (
     <div className="space-y-8">
@@ -168,10 +23,12 @@ export default function AuthorPostsPage() {
           <p className="text-sm text-zinc-500">Manage your published and draft guides.</p>
         </div>
 
-        <Button className="gap-2" onClick={() => router.push('/dashboard/author/posts/new')}>
-          <Plus size={16} />
-          <span>Create Post</span>
-        </Button>
+        <Link href="/dashboard/author/posts/new">
+          <Button className="gap-2">
+            <Plus size={16} />
+            <span>Create Post</span>
+          </Button>
+        </Link>
       </div>
 
       <div className="flex items-center gap-4">
@@ -183,7 +40,18 @@ export default function AuthorPostsPage() {
         </div>
       </div>
 
-      <DataTable columns={columns} data={posts} itemsPerPage={5} />
+      {posts.length === 0 ? (
+        <div className="text-center py-20 bg-zinc-50/50 rounded-3xl border border-zinc-100">
+          <p className="text-zinc-400 text-sm font-medium mb-4">No posts yet.</p>
+          <Link href="/dashboard/author/posts/new">
+            <Button variant="secondary" className="rounded-full text-xs uppercase tracking-widest font-bold">
+              Create your first post
+            </Button>
+          </Link>
+        </div>
+      ) : (
+        <AuthorPostsTable initialPosts={posts} />
+      )}
     </div>
   );
 }
