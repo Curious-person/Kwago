@@ -171,71 +171,115 @@ export default function AuthorProductsPage() {
                   <th className="px-6 py-4">Product</th>
                   <th className="px-6 py-4">Category</th>
                   <th className="px-6 py-4">Condition</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Featured In</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
                 {filteredProducts.map((product) => {
                   return (
-                  <tr key={product.id} className="hover:bg-zinc-50/50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-100 border border-zinc-200 shrink-0">
-                          <Image src={product.image} alt={product.name} fill className="object-cover" />
+                    <tr key={product.id} className="hover:bg-zinc-50/50">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-4">
+                          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-100 border border-zinc-200 shrink-0">
+                            <Image src={product.image} alt={product.name} fill className="object-cover" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-zinc-900">{product.name}</span>
+                            <span className="text-xs text-zinc-400">${product.price.toFixed(2)}</span>
+                          </div>
                         </div>
-                        <div className="flex flex-col">
-                          <span className="font-bold text-zinc-900">{product.name}</span>
-                          <span className="text-xs text-zinc-400">${product.price.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
-                        {product.category_names && product.category_names.length > 0
-                          ? product.category_names.join(', ')
-                          : 'Uncategorized'}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant={product.condition === 'New' ? 'default' : 'outline'} className="font-medium text-xs rounded-full px-3">
-                        {product.condition}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger render={
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-zinc-100" />
-                        }>
-                          <MoreHorizontal size={16} className="text-zinc-400" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-2xl w-48 p-2">
-                          <DropdownMenuGroup>
-                            <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">Options</DropdownMenuLabel>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
+                          {product.category_names && product.category_names.length > 0
+                            ? product.category_names.join(', ')
+                            : 'Uncategorized'}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge variant={product.condition === 'New' ? 'default' : 'outline'} className="font-medium text-xs rounded-full px-3">
+                          {product.condition}
+                        </Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        {product.status === 'pending_ai' && (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                            <span className="text-xs font-bold text-amber-600 uppercase tracking-widest">Analyzing...</span>
+                          </div>
+                        )}
+                        {product.status === 'ai-approved' && (
+                          <Badge variant="outline" className="font-medium text-xs rounded-full px-3 text-blue-600 border-blue-200 bg-blue-50">
+                            Pending Admin
+                          </Badge>
+                        )}
+                        {product.status === 'ai-declined' && (
+                          <Badge variant="outline" className="font-medium text-xs rounded-full px-3 text-red-600 border-red-200 bg-red-50">
+                            AI Flagged
+                          </Badge>
+                        )}
+                        {product.status === 'for-posting' && (
+                          <Badge variant="default" className="font-medium text-xs rounded-full px-3 bg-green-500 hover:bg-green-600">
+                            Published
+                          </Badge>
+                        )}
+                        {product.status === 'reject' && (
+                          <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
+                            Rejected
+                          </Badge>
+                        )}
+                        {!['pending_ai', 'ai-approved', 'ai-declined', 'for-posting', 'reject'].includes(product.status || '') && (
+                          <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
+                            {product.status || 'Draft'}
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {product.featured_in_blogs_count && product.featured_in_blogs_count > 0 ? (
+                          <Badge variant="outline" className="font-medium text-xs rounded-full px-3">
+                            {product.featured_in_blogs_count} {product.featured_in_blogs_count === 1 ? 'blog' : 'blogs'}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-zinc-400">Not featured</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger render={
+                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-zinc-100" />
+                          }>
+                            <MoreHorizontal size={16} className="text-zinc-400" />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="rounded-2xl w-48 p-2">
+                            <DropdownMenuGroup>
+                              <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">Options</DropdownMenuLabel>
+                              <DropdownMenuSeparator className="bg-zinc-100" />
+                              <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer">
+                                <Eye size={14} className="text-zinc-400" />
+                                <span className="font-medium">View Product</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="gap-2 px-3 py-2 rounded-xl cursor-pointer"
+                                onClick={() => handleEdit(product)}
+                              >
+                                <Edit size={14} className="text-zinc-400" />
+                                <span className="font-medium">Edit Product</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
                             <DropdownMenuSeparator className="bg-zinc-100" />
-                            <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer">
-                              <Eye size={14} className="text-zinc-400" />
-                              <span className="font-medium">View Product</span>
-                            </DropdownMenuItem>
                             <DropdownMenuItem
-                              className="gap-2 px-3 py-2 rounded-xl cursor-pointer"
-                              onClick={() => handleEdit(product)}
+                              className="gap-2 px-3 py-2 rounded-xl cursor-pointer text-red-500 hover:text-red-600 hover:bg-red-50 focus:bg-red-50"
+                              onClick={() => handleDelete(product)}
                             >
-                              <Edit size={14} className="text-zinc-400" />
-                              <span className="font-medium">Edit Product</span>
+                              <Trash2 size={14} />
+                              <span className="font-medium">Delete Product</span>
                             </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                          <DropdownMenuSeparator className="bg-zinc-100" />
-                          <DropdownMenuItem
-                            className="gap-2 px-3 py-2 rounded-xl cursor-pointer text-red-500 hover:text-red-600 hover:bg-red-50 focus:bg-red-50"
-                            onClick={() => handleDelete(product)}
-                          >
-                            <Trash2 size={14} />
-                            <span className="font-medium">Delete Product</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
                   );
                 })}
               </tbody>

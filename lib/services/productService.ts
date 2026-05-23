@@ -366,6 +366,7 @@ export function validateProduct(data: unknown): ProductServiceResponse<Product> 
             category_ids: Array.isArray(obj.category_ids) ? (obj.category_ids as string[]) : [],
             category_names: Array.isArray(obj.category_names) ? (obj.category_names as string[]) : [],
             description: obj.description as string | undefined,
+            status: typeof obj.status === 'string' ? obj.status : 'Draft',
         },
     };
 }
@@ -403,20 +404,23 @@ export function productRowToProduct(row: ProductRowWithCategories): ProductServi
         // Extract category IDs and names from junction table join if present
         const category_ids: string[] = [];
         const category_names: string[] = [];
-        
+
         if (row.product_categories) {
             row.product_categories.forEach((pc: any) => {
                 if (pc.category_id) category_ids.push(pc.category_id);
-                
+
                 // Handle both object and array response from Supabase for the joined category
                 const cat = pc.categories || pc.category;
                 const catObj = Array.isArray(cat) ? cat[0] : cat;
-                
+
                 if (catObj?.name) {
                     category_names.push(catObj.name);
                 }
             });
         }
+
+        // Extract blog post count from junction table join if present
+        const featured_in_blogs_count = row.blog_post_products?.length ?? 0;
 
         // Transform database row to Product interface
         const product: Product = {
@@ -428,6 +432,8 @@ export function productRowToProduct(row: ProductRowWithCategories): ProductServi
             category_ids: category_ids,
             category_names: category_names,
             description: row.description ?? undefined, // null → undefined
+            featured_in_blogs_count: featured_in_blogs_count,
+            status: row.status,
         };
 
         // Validate the transformed product
@@ -584,10 +590,10 @@ export async function fetchProducts(): Promise<ProductServiceResponse<Product[]>
 
         const supabase = createClient();
 
-        // Fetch products with their categories (RLS automatically filters by author_id)
+        // Fetch products with their categories and blog post links (RLS automatically filters by author_id)
         const { data, error } = await supabase
             .from('products')
-            .select('*, product_categories(category_id, categories(name))')
+            .select('*, product_categories(category_id, categories(name)), blog_post_products(blog_post_id)')
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -834,6 +840,7 @@ export async function createProduct(
             image: input.image.trim(),
             description: input.description?.trim() || null,
             author_id: user.id,
+            status: 'pending_ai',
         };
 
         console.log('[createProduct] Inserting product into database');
@@ -880,7 +887,7 @@ export async function createProduct(
                 console.error('[createProduct] Failed to link categories:', linkError);
                 // We don't fail the whole request, but we should log it
             }
-            
+
             // Attach them back for the frontend transformation
             (data as any).product_categories = input.category_ids.map(id => ({ category_id: id }));
         } else {
@@ -888,6 +895,22 @@ export async function createProduct(
         }
 
         console.log('[createProduct] Product created successfully:', data.id);
+
+        // Simulate AI Approval via 60-second static timer
+        setTimeout(async () => {
+            console.log(`[AI Moderation Simulation] 60s elapsed. Approving product ${data.id}...`);
+            const aiClient = createClient();
+            const { error: aiError } = await aiClient
+                .from('products')
+                .update({ status: 'ai-approved' })
+                .eq('id', data.id);
+            
+            if (aiError) {
+                console.error(`[AI Moderation Simulation] Failed to approve product ${data.id}:`, aiError);
+            } else {
+                console.log(`[AI Moderation Simulation] Product ${data.id} successfully ai-approved.`);
+            }
+        }, 60000);
 
         // Transform and validate created product
         return productRowToProduct(data as ProductRowWithCategories);
@@ -1079,7 +1102,7 @@ export async function updateProduct(
                 await supabase
                     .from('product_categories')
                     .insert(categoryLinks);
-                    
+
                 (data as any).product_categories = input.category_ids.map(cid => ({ category_id: cid }));
             } else {
                 (data as any).product_categories = [];
@@ -1090,7 +1113,7 @@ export async function updateProduct(
                 .from('product_categories')
                 .select('category_id')
                 .eq('product_id', id);
-                
+
             (data as any).product_categories = existingLinks || [];
         }
 
@@ -1170,6 +1193,122 @@ export async function deleteProduct(id: string): Promise<ProductServiceResponse<
         return {
             success: false,
             error: classified,
+        };
+    }
+}
+
+/**
+ * adminReviewProduct function
+ *
+ * Allows an admin to review an ai-approved product.
+ * Updates the status to 'for-posting' or 'reject'.
+ *
+ * @param id - Product UUID to review
+ * @param action - 'approve' to set for-posting, 'reject' to set reject
+ * @returns Promise<ProductServiceResponse<Product>> - Updated product or error
+ */
+export async function adminReviewProduct(id: string, action: 'approve' | 'reject'): Promise<ProductServiceResponse<Product>> {
+    try {
+        console.log(`[adminReviewProduct] Admin reviewing product ${id} with action: ${action}`);
+
+        const newStatus = action === 'approve' ? 'for-posting' : 'reject';
+        const supabase = createClient();
+
+        // Admin must have role admin to update (enforced by RLS)
+        const { data, error } = await supabase
+            .from('products')
+            .update({ status: newStatus })
+            .eq('id', id)
+            .select('*, product_categories(category_id, categories(name))')
+            .single();
+
+        if (error) {
+            console.error('[adminReviewProduct] Supabase error:', error);
+            const classified = classifySupabaseError(error);
+            return {
+                success: false,
+                error: classified,
+            };
+        }
+
+        if (!data) {
+            return {
+                success: false,
+                error: {
+                    code: 'UNKNOWN_ERROR',
+                    message: 'Failed to update product status or insufficient permissions',
+                },
+            };
+        }
+
+        console.log('[adminReviewProduct] Product review successful');
+        return productRowToProduct(data as ProductRowWithCategories);
+    } catch (error) {
+        console.error('[adminReviewProduct] Unexpected error:', error);
+        const classified = classifySupabaseError(error);
+        return {
+            success: false,
+            error: classified,
+        };
+    }
+}
+
+/**
+ * checkProductNameExists function
+ *
+ * Checks if a product with the same name already exists for the authenticated author.
+ *
+ * @param name - Product name to check
+ * @param excludeId - Optional product ID to exclude from the check (for updates)
+ * @returns Promise<ProductServiceResponse<boolean>> - True if exists, False otherwise
+ */
+export async function checkProductNameExists(name: string, excludeId?: string): Promise<ProductServiceResponse<boolean>> {
+    try {
+        const supabase = createClient();
+
+        // Get authenticated user
+        const {
+            data: { user },
+            error: authError,
+        } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            return {
+                success: false,
+                error: {
+                    code: 'AUTH_ERROR',
+                    message: 'Your session has expired. Please log in again.',
+                },
+            };
+        }
+
+        let query = supabase
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .ilike('name', name.trim())
+            .eq('author_id', user.id);
+
+        if (excludeId) {
+            query = query.neq('id', excludeId);
+        }
+
+        const { count, error } = await query;
+
+        if (error) {
+            return {
+                success: false,
+                error: classifySupabaseError(error),
+            };
+        }
+
+        return {
+            success: true,
+            data: (count && count > 0) ? true : false,
+        };
+    } catch (error) {
+        return {
+            success: false,
+            error: classifySupabaseError(error),
         };
     }
 }

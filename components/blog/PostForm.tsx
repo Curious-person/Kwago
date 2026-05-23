@@ -13,8 +13,9 @@
  * See CONVENTIONS.md for the shared-component pattern used across Kwago.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   ArrowLeft,
   Save,
@@ -26,6 +27,9 @@ import {
   Trash2,
   PlusCircle,
   Sparkles,
+  Package,
+  X,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -41,7 +45,9 @@ import {
 
 import { createClient } from '@/lib/supabase/client';
 import { createPost, updatePost } from '@/lib/services/postService';
+import { fetchProducts } from '@/lib/services/productService';
 import type { BlockType, ContentBlock, Post } from '@/types/post';
+import type { Product } from '@/types/product';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -98,6 +104,41 @@ export default function PostForm({ mode, initialData, postId }: PostFormProps) {
   const [draggedBlockIndex, setDraggedBlockIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Product linking
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+
+  // -------------------------------------------------------------------------
+  // Fetch products on mount
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      setProductsLoading(true);
+      const response = await fetchProducts();
+      if (response.success) {
+        setProducts(response.data.filter((p) => p.status === 'for-posting'));
+      }
+      setProductsLoading(false);
+    };
+    loadProducts();
+  }, []);
+
+  // -------------------------------------------------------------------------
+  // Product selection
+  // -------------------------------------------------------------------------
+
+  const toggleProductSelection = (productId: string) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
+    );
+  };
+
+  const removeSelectedProduct = (productId: string) => {
+    setSelectedProductIds((prev) => prev.filter((id) => id !== productId));
+  };
+
   // -------------------------------------------------------------------------
   // Block actions
   // -------------------------------------------------------------------------
@@ -153,6 +194,8 @@ export default function PostForm({ mode, initialData, postId }: PostFormProps) {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
+
+
       if (!user) {
         alert('You must be logged in to save posts.');
         setIsSaving(false);
@@ -169,16 +212,55 @@ export default function PostForm({ mode, initialData, postId }: PostFormProps) {
       };
 
       let response;
+      let savedPostId = postId;
+
       if (mode === 'edit' && postId) {
         response = await updatePost(postId, payload);
       } else {
         response = await createPost(payload, user.id);
+        if (response.success) {
+          savedPostId = response.data.id;
+        }
       }
+
+      console.log('[PostForm] Linked products:', selectedProductIds);
+      console.log('[PostForm] Response:', response);
 
       if (!response.success) {
         alert(response.error?.message || 'Failed to save post.');
         setIsSaving(false);
         return;
+      }
+
+      // Link selected products to the post
+      if (savedPostId && selectedProductIds.length > 0) {
+        try {
+          // First, delete any existing links for this post
+          await supabase
+            .from('blog_post_products')
+            .delete()
+            .eq('blog_post_id', savedPostId);
+
+          // Then insert the new links
+          const linksToInsert = selectedProductIds.map((productId, index) => ({
+            blog_post_id: savedPostId,
+            product_id: productId,
+            position: index,
+            is_featured: true,
+          }));
+
+          const { error: linkError } = await supabase
+            .from('blog_post_products')
+            .insert(linksToInsert);
+
+          if (linkError) {
+            console.error('Error linking products:', linkError);
+            alert('Post saved but there was an error linking products.');
+          }
+        } catch (err) {
+          console.error('Error during product linking:', err);
+          alert('Post saved but there was an error linking products.');
+        }
       }
 
       setIsModalOpen(true);
@@ -331,13 +413,13 @@ export default function PostForm({ mode, initialData, postId }: PostFormProps) {
                       className={cn(
                         'w-full bg-transparent focus:outline-none transition-all resize-none',
                         block.type === 'headline' &&
-                          'text-2xl font-bold text-zinc-900 placeholder:text-zinc-200',
+                        'text-2xl font-bold text-zinc-900 placeholder:text-zinc-200',
                         block.type === 'subtitle' &&
-                          'text-xl font-medium text-zinc-900 placeholder:text-zinc-200',
+                        'text-xl font-medium text-zinc-900 placeholder:text-zinc-200',
                         block.type === 'quote' &&
-                          'border-l-4 border-[#0066FF] pl-6 italic text-xl text-zinc-900 placeholder:text-zinc-200',
+                        'border-l-4 border-[#0066FF] pl-6 italic text-xl text-zinc-900 placeholder:text-zinc-200',
                         block.type === 'body' &&
-                          'text-zinc-600 leading-relaxed placeholder:text-zinc-300'
+                        'text-zinc-600 leading-relaxed placeholder:text-zinc-300'
                       )}
                       placeholder={`Enter ${block.type} content...`}
                       value={block.content}
@@ -447,6 +529,112 @@ export default function PostForm({ mode, initialData, postId }: PostFormProps) {
                 />
               </div>
             </div>
+          </section>
+
+          {/* Featured Products */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-widest border-b border-zinc-100 pb-4 flex-1">
+                Featured Products
+              </h3>
+              <Badge variant="secondary" className="text-[10px] font-bold rounded-full px-2">
+                {selectedProductIds.length}
+              </Badge>
+            </div>
+
+            {/* Selected products */}
+            {selectedProductIds.length > 0 && (
+              <div className="space-y-2 p-4 rounded-2xl bg-blue-50/50 border border-blue-100">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-blue-900 mb-2">
+                  Linked Products
+                </p>
+                <div className="space-y-2">
+                  {selectedProductIds.map((productId) => {
+                    const product = products.find((p) => p.id === productId);
+                    return product ? (
+                      <div
+                        key={productId}
+                        className="flex items-center gap-2 p-2 rounded-xl bg-white border border-zinc-100 group hover:border-blue-200 transition-all"
+                      >
+                        <div className="relative w-8 h-8 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200 shrink-0">
+                          <Image
+                            src={product.image}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-zinc-900 truncate">{product.name}</p>
+                          <p className="text-[10px] text-zinc-400">${product.price.toFixed(2)}</p>
+                        </div>
+                        <button
+                          onClick={() => removeSelectedProduct(productId)}
+                          className="p-1 text-zinc-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Product selector */}
+            {productsLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 size={20} className="text-zinc-400 animate-spin" />
+              </div>
+            ) : products.length === 0 ? (
+              <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-100 text-center">
+                <p className="text-xs text-zinc-500 font-medium">
+                  No products created yet. Create products to feature them in blog posts.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                {products
+                  .filter((p) => !selectedProductIds.includes(p.id))
+                  .map((product) => (
+                    <button
+                      key={product.id}
+                      onClick={() => toggleProductSelection(product.id)}
+                      className="w-full flex items-center gap-2 p-3 rounded-xl border border-zinc-100 bg-white hover:bg-blue-50/50 hover:border-blue-200 transition-all text-left group"
+                    >
+                      <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200 shrink-0">
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-zinc-900 truncate">{product.name}</p>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[10px] text-zinc-400">${product.price.toFixed(2)}</span>
+                          <span className="text-[10px] text-zinc-300">•</span>
+                          <Badge
+                            variant="secondary"
+                            className="text-[9px] rounded-full px-1.5 h-4 flex items-center"
+                          >
+                            {product.condition}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div
+                        className={cn(
+                          'w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
+                          'border-zinc-300 group-hover:border-blue-400 group-hover:bg-blue-50'
+                        )}
+                      >
+                        <div className="w-3 h-3 rounded-full bg-transparent group-hover:bg-blue-400 transition-all" />
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            )}
           </section>
 
           {/* Quick preview */}

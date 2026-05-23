@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Image as ImageIcon, Tag, DollarSign, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, Image as ImageIcon, Tag, DollarSign, CheckCircle2, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -14,7 +14,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Product } from '@/types/product';
-import { createProduct } from '@/lib/services/productService';
+import { createProduct, checkProductNameExists } from '@/lib/services/productService';
 import { MultiSelect } from '@/components/ui/MultiSelect';
 import { fetchCategories } from '@/app/dashboard/author/categories/actions';
 import { Category } from '@/lib/types/category';
@@ -31,6 +31,7 @@ export default function NewProductPage() {
     });
 
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+    const [isAIReviewModalOpen, setIsAIReviewModalOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
     const [createdProduct, setCreatedProduct] = useState<Product | null>(null);
@@ -88,6 +89,15 @@ export default function NewProductPage() {
         setIsCreating(true);
         setCreateError(null);
 
+        // Check for duplicates
+        const excludeId = formData.id.startsWith('temp-') ? undefined : formData.id;
+        const existsResponse = await checkProductNameExists(formData.name, excludeId);
+        if (existsResponse.success && existsResponse.data) {
+            setCreateError('A product with this name already exists in your inventory.');
+            setIsCreating(false);
+            return;
+        }
+
         const response = await createProduct({
         name: formData.name,
         price: formData.price,
@@ -103,10 +113,28 @@ export default function NewProductPage() {
             return;
         }
 
-        // Success - show modal and store created product
+        // Success - show AI modal first
         setCreatedProduct(response.data);
         setIsCreating(false);
-        setIsPublishModalOpen(true);
+        setIsAIReviewModalOpen(true);
+
+        // Transition to success modal after simulation
+        setTimeout(() => {
+            setIsAIReviewModalOpen(false);
+            setTimeout(() => {
+                setIsPublishModalOpen(true);
+                // Reset form to defaults
+                setFormData({
+                    id: `temp-${Date.now()}`,
+                    name: '',
+                    price: 0,
+                    condition: 'New',
+                    category_ids: [],
+                    image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop',
+                    description: '',
+                });
+            }, 300);
+        }, 2500);
     };
 
     return (
@@ -305,8 +333,29 @@ export default function NewProductPage() {
                 </div>
             </div>
 
+            <Dialog open={isAIReviewModalOpen} onOpenChange={setIsAIReviewModalOpen}>
+                <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border border-zinc-100 shadow-none bg-white rounded-2xl [&>button]:hidden">
+                    <div className="p-12 space-y-8 flex flex-col items-center justify-center text-center">
+                        <div className="relative flex items-center justify-center">
+                            <div className="absolute w-24 h-24 bg-amber-400/20 rounded-full animate-ping" />
+                            <div className="relative w-20 h-20 rounded-full bg-amber-50 flex items-center justify-center ring-1 ring-amber-100 z-10">
+                                <Sparkles className="text-amber-500 animate-pulse" size={32} />
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <DialogTitle className="text-2xl font-bold text-zinc-900 tracking-tight leading-tight">
+                                AI Content Review
+                            </DialogTitle>
+                            <DialogDescription className="text-zinc-500 text-sm leading-relaxed max-w-[280px] mx-auto">
+                                Our AI moderation system is analyzing your product details and image to ensure they meet community guidelines.
+                            </DialogDescription>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             <Dialog open={isPublishModalOpen} onOpenChange={setIsPublishModalOpen}>
-                <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border-none bg-white rounded-[32px] shadow-2xl">
+                <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border border-zinc-100 shadow-none bg-white rounded-2xl">
                     <div className="p-8 space-y-8">
                         <div className="space-y-4">
                             <div className="w-14 h-14 rounded-2xl bg-[#0066FF]/5 flex items-center justify-center mb-6 ring-1 ring-[#0066FF]/10">
@@ -339,7 +388,7 @@ export default function NewProductPage() {
                             onClick={() => setIsPublishModalOpen(false)}
                             className="flex-1 rounded-full text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-all font-bold uppercase tracking-widest text-[10px]"
                         >
-                            Done
+                            Add Another
                         </Button>
                         <Button
                             onClick={() => router.push('/dashboard/author/products')}

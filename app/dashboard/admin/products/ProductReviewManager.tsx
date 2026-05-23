@@ -2,25 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { 
-  Eye, 
-  CheckCircle2, 
-  XCircle, 
-  Search,
-  Package,
-  FileText
-} from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { DataTable, ColumnDef } from '@/components/ui/data-table';
 import { createClient } from '@/lib/supabase/client';
-import { adminReviewProduct } from '@/lib/services/productService';
 import { Product } from '@/types/product';
 
-export function ContentReviewManager() {
-  const router = useRouter();
+export function ProductReviewManager() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,7 +19,7 @@ export function ContentReviewManager() {
     const { data, error } = await supabase
       .from('products')
       .select('*, product_categories(category_id, categories(name))')
-      .in('status', ['ai-approved', 'for-posting', 'reject'])
+      .eq('status', 'ai-approved')
       .order('created_at', { ascending: false });
 
     if (!error && data) {
@@ -42,15 +31,6 @@ export function ContentReviewManager() {
   useEffect(() => {
     fetchProducts();
   }, []);
-
-  const handleReviewAction = async (id: string, action: 'approve' | 'reject') => {
-    const result = await adminReviewProduct(id, action);
-    if (result.success) {
-      fetchProducts(); // Refresh list after action
-    } else {
-      console.error('Failed to review product:', result.error);
-    }
-  };
 
   const columns = React.useMemo<ColumnDef<Product>[]>(() => [
     {
@@ -84,47 +64,6 @@ export function ContentReviewManager() {
             <Badge variant="outline" className="font-medium text-xs rounded-full px-3 text-blue-600 border-blue-200 bg-blue-50">
               Pending Admin
             </Badge>
-          )}
-          {row.status === 'for-posting' && (
-            <Badge variant="default" className="font-medium text-xs rounded-full px-3 bg-green-500">
-              Approved
-            </Badge>
-          )}
-          {row.status === 'reject' && (
-            <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
-              Rejected
-            </Badge>
-          )}
-        </div>
-      )
-    },
-    {
-      header: 'Actions',
-      className: 'text-right',
-      headerClassName: 'text-right',
-      cell: (row) => (
-        <div className="flex justify-end gap-2">
-          {row.status === 'ai-approved' && (
-            <>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="rounded-full px-4 text-[10px] font-bold uppercase tracking-widest text-red-600 hover:bg-red-50 hover:text-red-700 hover:border-red-200 h-8 gap-2"
-                onClick={() => handleReviewAction(row.id, 'reject')}
-              >
-                <XCircle size={12} />
-                Reject
-              </Button>
-              <Button 
-                variant="primary" 
-                size="sm" 
-                className="rounded-full px-4 text-[10px] font-bold uppercase tracking-widest bg-[#0066FF] text-white hover:bg-blue-600 h-8 gap-2"
-                onClick={() => handleReviewAction(row.id, 'approve')}
-              >
-                <CheckCircle2 size={12} />
-                Approve
-              </Button>
-            </>
           )}
         </div>
       )
