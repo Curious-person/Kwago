@@ -235,7 +235,7 @@ function ContentPipelineChart() {
             </div>
           ))}
           <Link
-            href="/dashboard/admin/content"
+            href="/dashboard/admin/posts"
             className="mt-1 text-[10px] font-bold uppercase tracking-widest text-[#0066FF] hover:text-blue-700 transition-colors flex items-center gap-1"
           >
             Review Queue <ArrowRight className="w-3 h-3" />
@@ -426,7 +426,7 @@ export default function AdminOverviewPage() {
           value={pendingContent}
           sub={`${publishedContent} published`}
           accent="bg-amber-50"
-          href="/dashboard/admin/content"
+          href="/dashboard/admin/posts"
         />
         <StatCard
           icon={<Flag className="w-5 h-5 text-red-500" />}

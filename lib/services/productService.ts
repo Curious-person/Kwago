@@ -366,7 +366,7 @@ export function validateProduct(data: unknown): ProductServiceResponse<Product> 
             category_ids: Array.isArray(obj.category_ids) ? (obj.category_ids as string[]) : [],
             category_names: Array.isArray(obj.category_names) ? (obj.category_names as string[]) : [],
             description: obj.description as string | undefined,
-            status: typeof obj.status === 'string' ? obj.status : 'Draft',
+            status: typeof obj.status === 'string' ? obj.status as import('@/types/product').ProductStatus : undefined,
         },
     };
 }
@@ -910,7 +910,7 @@ export async function createProduct(
             } else {
                 console.log(`[AI Moderation Simulation] Product ${data.id} successfully ai-approved.`);
             }
-        }, 60000);
+        }, 2500);
 
         // Transform and validate created product
         return productRowToProduct(data as ProductRowWithCategories);

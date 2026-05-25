@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Image as ImageIcon, Tag, DollarSign, CheckCircle2, Loader2, AlertCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Image as ImageIcon, DollarSign, CheckCircle2, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -18,17 +18,40 @@ import { createProduct, checkProductNameExists } from '@/lib/services/productSer
 import { MultiSelect } from '@/components/ui/MultiSelect';
 import { fetchCategories } from '@/app/dashboard/author/categories/actions';
 import { Category } from '@/lib/types/category';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const productSchema = z.object({
+    id: z.string().optional(),
+    name: z.string().min(1, 'Product name is required'),
+    price: z.number({ message: "Price must be a valid number" }).min(0.01, 'Price must be greater than 0'),
+    condition: z.enum(['New', 'Used']),
+    category_ids: z.array(z.string()).min(1, 'At least one category is required'),
+    image: z.string().min(1, 'Image URL is required').url('Image must be a valid URL'),
+    description: z.string().optional(),
+});
+
+type ProductFormData = z.infer<typeof productSchema>;
 
 export default function NewProductPage() {
     const router = useRouter();
-    const [formData, setFormData] = useState<Product>({
-        id: `temp-${Date.now()}`,
-        name: '',
-        price: 0,
-        condition: 'New',
-        category_ids: [],
-        image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop',
+
+    const form = useForm<ProductFormData>({
+        resolver: zodResolver(productSchema),
+        defaultValues: {
+            id: `temp-${Date.now()}`,
+            name: '',
+            price: 0,
+            condition: 'New',
+            category_ids: [],
+            image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop',
+            description: '',
+        }
     });
+
+    const { register, handleSubmit, control, watch, formState: { errors }, setValue, reset } = form;
+    const watchedValues = watch();
 
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
     const [isAIReviewModalOpen, setIsAIReviewModalOpen] = useState(false);
@@ -61,37 +84,16 @@ export default function NewProductPage() {
     }));
 
     const handleConditionToggle = () => {
-        setFormData((prev) => ({
-            ...prev,
-            condition: prev.condition === 'New' ? 'Used' : 'New',
-        }));
+        setValue('condition', watchedValues.condition === 'New' ? 'Used' : 'New', { shouldValidate: true });
     };
 
-    const handleSave = async () => {
-        // Client-side validation
-        if (!formData.name.trim()) {
-            setCreateError('Product name is required');
-            return;
-        }
-        if (formData.price <= 0) {
-            setCreateError('Price must be greater than 0');
-            return;
-        }
-        if (!formData.category_ids || formData.category_ids.length === 0) {
-            setCreateError('At least one category is required');
-            return;
-        }
-        if (!formData.image.trim()) {
-            setCreateError('Image URL is required');
-            return;
-        }
-
+    const onSubmit = async (data: ProductFormData) => {
         setIsCreating(true);
         setCreateError(null);
 
         // Check for duplicates
-        const excludeId = formData.id.startsWith('temp-') ? undefined : formData.id;
-        const existsResponse = await checkProductNameExists(formData.name, excludeId);
+        const excludeId = data.id?.startsWith('temp-') ? undefined : data.id;
+        const existsResponse = await checkProductNameExists(data.name, excludeId);
         if (existsResponse.success && existsResponse.data) {
             setCreateError('A product with this name already exists in your inventory.');
             setIsCreating(false);
@@ -99,13 +101,13 @@ export default function NewProductPage() {
         }
 
         const response = await createProduct({
-        name: formData.name,
-        price: formData.price,
-        condition: formData.condition,
-        image: formData.image,
-        category_ids: formData.category_ids,
-        description: formData.description,
-      });
+            name: data.name,
+            price: data.price,
+            condition: data.condition,
+            image: data.image,
+            category_ids: data.category_ids,
+            description: data.description,
+        });
 
         if (!response.success) {
             setCreateError(response.error.message);
@@ -124,7 +126,7 @@ export default function NewProductPage() {
             setTimeout(() => {
                 setIsPublishModalOpen(true);
                 // Reset form to defaults
-                setFormData({
+                reset({
                     id: `temp-${Date.now()}`,
                     name: '',
                     price: 0,
@@ -151,10 +153,10 @@ export default function NewProductPage() {
                     </Button>
                     <div>
                         <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">
-                            {formData.id.startsWith('temp-') ? 'Add Product' : 'Edit Product'}
+                            {watchedValues.id?.startsWith('temp-') ? 'Add Product' : 'Edit Product'}
                         </h1>
                         <p className="text-zinc-500 text-sm">
-                            {formData.id.startsWith('temp-') ? 'Add a new collectible to your inventory.' : 'Update the product details.'}
+                            {watchedValues.id?.startsWith('temp-') ? 'Add a new collectible to your inventory.' : 'Update the product details.'}
                         </p>
                     </div>
                 </div>
@@ -163,7 +165,7 @@ export default function NewProductPage() {
                     <Button variant="secondary" onClick={() => router.push('/dashboard/author/products')} disabled={isCreating}>
                         Cancel
                     </Button>
-                    <Button onClick={handleSave} className="gap-2" disabled={isCreating}>
+                    <Button onClick={handleSubmit(onSubmit)} className="gap-2" disabled={isCreating}>
                         {isCreating ? (
                             <>
                                 <Loader2 size={16} className="animate-spin" />
@@ -195,7 +197,7 @@ export default function NewProductPage() {
                         </div>
                     )}
 
-                    <div className="space-y-6">
+                    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
                         {/* Image Upload */}
                         <div className="space-y-3">
                             <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
@@ -203,8 +205,8 @@ export default function NewProductPage() {
                             </label>
                             <div className="relative aspect-video rounded-3xl overflow-hidden bg-zinc-50 border border-zinc-100 group">
                                 <img
-                                    src={formData.image}
-                                    alt={formData.name}
+                                    src={watchedValues.image || ''}
+                                    alt={watchedValues.name || 'Product'}
                                     className="w-full h-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -212,12 +214,12 @@ export default function NewProductPage() {
                                 </div>
                             </div>
                             <Input
-                                value={formData.image}
-                                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                {...register('image')}
                                 placeholder="Image URL"
-                                className="bg-zinc-50"
+                                className={`bg-zinc-50 ${errors.image ? 'border-red-500 focus:ring-red-500' : ''}`}
                                 disabled={isCreating}
                             />
+                            {errors.image && <p className="text-xs text-red-500">{errors.image.message}</p>}
                         </div>
 
                         {/* Basic Info */}
@@ -227,12 +229,12 @@ export default function NewProductPage() {
                                     Product Name
                                 </label>
                                 <Input
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    {...register('name')}
                                     placeholder="e.g. Marvel Legends Iron Man Mark LXXXV"
-                                    className="text-xl font-bold py-6 px-6"
+                                    className={`text-xl font-bold py-6 px-6 ${errors.name ? 'border-red-500 focus:ring-red-500' : ''}`}
                                     disabled={isCreating}
                                 />
+                                {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -244,13 +246,14 @@ export default function NewProductPage() {
                                         <DollarSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
                                         <Input
                                             type="number"
-                                            value={formData.price}
-                                            onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                                            step="0.01"
+                                            {...register('price', { valueAsNumber: true })}
                                             placeholder="29.99"
-                                            className="pl-10 h-12"
+                                            className={`pl-10 h-12 ${errors.price ? 'border-red-500 focus:ring-red-500' : ''}`}
                                             disabled={isCreating}
                                         />
                                     </div>
+                                    {errors.price && <p className="text-xs text-red-500">{errors.price.message}</p>}
                                 </div>
                                 <div className="space-y-3">
                                     <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
@@ -261,11 +264,12 @@ export default function NewProductPage() {
                                             }`}
                                         onClick={isCreating ? undefined : handleConditionToggle}
                                     >
-                                        <span className="text-sm font-bold text-zinc-900">{formData.condition}</span>
-                                        <Badge variant={formData.condition === 'New' ? 'default' : 'secondary'} className="rounded-full h-6 px-3">
+                                        <span className="text-sm font-bold text-zinc-900">{watchedValues.condition}</span>
+                                        <Badge variant={watchedValues.condition === 'New' ? 'default' : 'secondary'} className="rounded-full h-6 px-3">
                                             Toggle
                                         </Badge>
                                     </div>
+                                    {errors.condition && <p className="text-xs text-red-500">{errors.condition.message}</p>}
                                 </div>
                             </div>
 
@@ -273,13 +277,20 @@ export default function NewProductPage() {
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
                                     Categories
                                 </label>
-                                <MultiSelect
-                                    options={categoryOptions}
-                                    selected={formData.category_ids || []}
-                                    onChange={(selected) => setFormData({ ...formData, category_ids: selected })}
-                                    placeholder="Select product categories..."
-                                    disabled={isCreating || isLoadingCategories}
+                                <Controller
+                                    name="category_ids"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <MultiSelect
+                                            options={categoryOptions}
+                                            selected={field.value || []}
+                                            onChange={field.onChange}
+                                            placeholder="Select product categories..."
+                                            disabled={isCreating || isLoadingCategories}
+                                        />
+                                    )}
                                 />
+                                {errors.category_ids && <p className="text-xs text-red-500">{errors.category_ids.message}</p>}
                             </div>
 
                             <div className="space-y-3">
@@ -287,15 +298,15 @@ export default function NewProductPage() {
                                     Description (Optional)
                                 </label>
                                 <textarea
-                                    value={formData.description || ''}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    {...register('description')}
                                     placeholder="Add a detailed description of your product..."
-                                    className="w-full min-h-[120px] px-4 py-3 rounded-2xl border border-zinc-200 bg-zinc-50 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent resize-y disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className={`w-full min-h-[120px] px-4 py-3 rounded-2xl border border-zinc-200 bg-zinc-50 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent resize-y disabled:opacity-50 disabled:cursor-not-allowed ${errors.description ? 'border-red-500 focus:ring-red-500' : ''}`}
                                     disabled={isCreating}
                                 />
+                                {errors.description && <p className="text-xs text-red-500">{errors.description.message}</p>}
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
 
                 {/* Sidebar Settings */}
@@ -305,27 +316,27 @@ export default function NewProductPage() {
                         <div className="space-y-4">
                             <div className="relative aspect-video rounded-2xl overflow-hidden bg-zinc-200">
                                 <img
-                                    src={formData.image}
-                                    alt={formData.name}
+                                    src={watchedValues.image || ''}
+                                    alt={watchedValues.name || 'Product preview'}
                                     className="w-full h-full object-cover"
                                 />
                             </div>
                             <div className="space-y-2">
                                 <Badge variant="secondary" className="text-xs">
-                                    {formData.category_ids && formData.category_ids.length > 0 
-                                        ? availableCategories.find(c => c.id === formData.category_ids![0])?.name
+                                    {watchedValues.category_ids && watchedValues.category_ids.length > 0 
+                                        ? availableCategories.find(c => c.id === watchedValues.category_ids[0])?.name
                                         : 'Uncategorized'}
-                                    {formData.category_ids && formData.category_ids.length > 1 && ` +${formData.category_ids.length - 1}`}
+                                    {watchedValues.category_ids && watchedValues.category_ids.length > 1 && ` +${watchedValues.category_ids.length - 1}`}
                                 </Badge>
                                 <h4 className="font-bold text-zinc-900 leading-tight line-clamp-2 text-lg">
-                                    {formData.name || 'Untitled Product'}
+                                    {watchedValues.name || 'Untitled Product'}
                                 </h4>
                                 <p className="text-2xl font-bold text-[#0066FF]">
-                                    ${formData.price.toFixed(2)}
+                                    ${(watchedValues.price || 0).toFixed(2)}
                                 </p>
                                 <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full ${formData.condition === 'New' ? 'bg-[#0066FF]' : 'bg-zinc-400'}`} />
-                                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">{formData.condition}</span>
+                                    <div className={`w-2 h-2 rounded-full ${watchedValues.condition === 'New' ? 'bg-[#0066FF]' : 'bg-zinc-400'}`} />
+                                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">{watchedValues.condition}</span>
                                 </div>
                             </div>
                         </div>
@@ -376,7 +387,7 @@ export default function NewProductPage() {
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Product Details</p>
-                                    <p className="text-sm font-medium text-zinc-600">{formData.name || 'Untitled Product'}</p>
+                                    <p className="text-sm font-medium text-zinc-600">{watchedValues.name || 'Untitled Product'}</p>
                                 </div>
                             </div>
                         </div>

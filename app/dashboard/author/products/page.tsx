@@ -178,6 +178,7 @@ export default function AuthorProductsPage() {
               </thead>
               <tbody className="divide-y divide-zinc-100">
                 {filteredProducts.map((product) => {
+                  console.log("product data:", product);
                   return (
                     <tr key={product.id} className="hover:bg-zinc-50/50">
                       <td className="px-6 py-4">

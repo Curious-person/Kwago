@@ -71,8 +71,11 @@ export const Sidebar = ({ isAdmin, isAuthor, role }: SidebarProps) => {
             <SidebarLink href="/dashboard/admin/comments" icon={<MessageSquare size={15} />} isCollapsed={isCollapsed}>
               Comments
             </SidebarLink>
-            <SidebarLink href="/dashboard/admin/content" icon={<Layers size={15} />} isCollapsed={isCollapsed}>
-              Content
+            <SidebarLink href="/dashboard/admin/posts" icon={<Layers size={15} />} isCollapsed={isCollapsed}>
+              Review Posts
+            </SidebarLink>
+            <SidebarLink href="/dashboard/admin/products" icon={<Package size={15} />} isCollapsed={isCollapsed}>
+              Review Products
             </SidebarLink>
             <SidebarLink href="/dashboard/admin/users" icon={<Users size={15} />} isCollapsed={isCollapsed}>
               Users

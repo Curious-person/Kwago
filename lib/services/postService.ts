@@ -121,3 +121,58 @@ export async function deletePost(id: string): Promise<PostServiceResponse<void>>
     return { success: false, error: classifyPostError(err) };
   }
 }
+
+/**
+ * Allows an admin to review a community blog post.
+ * Updates the status to 'Published' (approve) or 'Draft' (reject).
+ *
+ * @param id - Post UUID to review
+ * @param action - 'approve' to publish the post, 'reject' to keep as draft
+ * @returns Promise<PostServiceResponse<Post>> - Updated post or error
+ */
+export async function adminReviewPost(
+  id: string,
+  action: 'approve' | 'reject'
+): Promise<PostServiceResponse<Post>> {
+  try {
+    console.log(`[adminReviewPost] Admin reviewing post ${id} with action: ${action}`);
+
+    const newStatus = action === 'approve' ? 'Published' : 'Draft';
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from('blog_posts')
+      .update({ status: newStatus })
+      .eq('id', id)
+      .select('*, profiles:author_id(display_name, avatar_url)')
+      .single();
+
+    if (error) {
+      console.error('[adminReviewPost] Supabase error:', error);
+      return {
+        success: false,
+        error: classifyPostError(error),
+      };
+    }
+
+    if (!data) {
+      return {
+        success: false,
+        error: {
+          code: 'UNKNOWN_ERROR',
+          message: 'Failed to update post status or insufficient permissions',
+        },
+      };
+    }
+
+    console.log('[adminReviewPost] Post review successful');
+    return { success: true, data: postRowToPost(data as BlogPostRow) };
+  } catch (err) {
+    console.error('[adminReviewPost] Unexpected error:', err);
+    return {
+      success: false,
+      error: classifyPostError(err),
+    };
+  }
+}
+
