@@ -73,7 +73,6 @@ export default function ProductsDebugPage() {
             price: 9.99,
             condition: 'New',
             image: 'https://via.placeholder.com/400',
-            category: 'Test',
             description: 'Diagnostic test product',
             author_id: user.id,
         };

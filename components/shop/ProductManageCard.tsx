@@ -47,7 +47,7 @@ export const ProductManageCard = ({ product, onEdit, onDelete }: ProductManageCa
               ))
             ) : (
               <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                {product.category}
+                Uncategorized
               </p>
             )}
           </div>

@@ -11,7 +11,7 @@ const MOCK_SALES: ProductSalesData[] = [
       name: 'Marvel Legends Series Iron Man Mark LXXXV',
       price: 24.99,
       condition: 'New',
-      category: 'Marvel Legends',
+      category_names: ['Marvel Legends'],
       image: 'https://images.unsplash.com/photo-1531279554141-7dfdb443c375?q=80&w=800&auto=format&fit=crop'
     },
     totalUnitsSold: 42,
@@ -27,7 +27,7 @@ const MOCK_SALES: ProductSalesData[] = [
       name: 'The Lord of the Rings: Witch-King of Angmar Statue',
       price: 499.00,
       condition: 'New',
-      category: 'Weta Workshop',
+      category_names: ['Weta Workshop'],
       image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop'
     },
     totalUnitsSold: 5,
@@ -43,7 +43,7 @@ const MOCK_SALES: ProductSalesData[] = [
       name: 'Spider-Man: Across the Spider-Verse Gwen Stacy',
       price: 19.99,
       condition: 'Used',
-      category: 'Marvel Legends',
+      category_names: ['Marvel Legends'],
       image: 'https://images.unsplash.com/photo-1635805737707-575885ab0820?q=80&w=800&auto=format&fit=crop'
     },
     totalUnitsSold: 12,

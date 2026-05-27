@@ -8,52 +8,7 @@ import { CategoryFilter } from '@/components/blog/CategoryFilter';
 import { PostCard } from '@/components/blog/PostCard';
 import { Button } from '@/components/ui/Button';
 import { getUserRole } from '@/lib/auth';
-
-const POSTS = [
-  {
-    title: "Finding Silence in Architecture",
-    excerpt: "How physical spaces influence our mental clarity and why minimalist design is more than just aesthetics.",
-    category: "Design",
-    date: "Oct 21, 2024",
-    image: "https://images.unsplash.com/photo-1518005020250-685949320299?q=80&w=800&auto=format&fit=crop"
-  },
-  {
-    title: "The Future of Calm UI",
-    excerpt: "Designing interfaces that respect human attention rather than competing for every single second of it.",
-    category: "Technology",
-    date: "Oct 19, 2024",
-    image: "https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=800&auto=format&fit=crop"
-  },
-  {
-    title: "Stoicism in the Modern Age",
-    excerpt: "Practical ancient wisdom for navigating the complexities and stresses of the twenty-first century.",
-    category: "Philosophy",
-    date: "Oct 15, 2024",
-    image: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=800&auto=format&fit=crop"
-  },
-  {
-    title: "The Power of Essentialism",
-    excerpt: "Why doing fewer things better is the secret to high performance and lasting personal satisfaction.",
-    category: "Productivity",
-    date: "Oct 12, 2024",
-    image: "https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?q=80&w=800&auto=format&fit=crop"
-  },
-  {
-    title: "Deep Work and Creative Flow",
-    excerpt: "The neurobiology of focus and how to enter a state of flow to produce your best creative work.",
-    category: "Creativity",
-    date: "Oct 08, 2024",
-    image: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=800&auto=format&fit=crop"
-  },
-  {
-    title: "Slow Travel Manifesto",
-    excerpt: "Moving through the world with curiosity and patience instead of rushing through bucket lists.",
-    category: "Lifestyle",
-    date: "Oct 05, 2024",
-    image: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=800&auto=format&fit=crop"
-  }
-];
-
+import { fetchPublishedPosts } from '@/lib/services/postService.server';
 import { SmoothScroll } from '@/components/ui/SmoothScroll';
 import { ScrollReveal } from '@/components/ui/ScrollReveal';
 
@@ -68,6 +23,20 @@ export default async function Home() {
     redirect('/dashboard/author/posts');
   }
 
+  const postsResult = await fetchPublishedPosts(7);
+  const posts = postsResult.success && postsResult.data ? postsResult.data : [];
+
+  const heroPost = posts.length > 0 ? posts[0] : null;
+  const gridPosts = posts.length > 0 ? posts.slice(1) : [];
+
+  let heroExcerpt = '';
+  let heroSlug = '';
+  if (heroPost) {
+    const heroExcerptBlock = heroPost.blocks.find(b => b.type === 'body');
+    heroExcerpt = heroExcerptBlock ? heroExcerptBlock.content : '';
+    heroSlug = heroPost.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  }
+
   return (
     <SmoothScroll>
       <div className="min-h-screen bg-white flex flex-col">
@@ -75,9 +44,20 @@ export default async function Home() {
         
         <main className="flex-1 max-w-7xl mx-auto w-full pb-20">
           {/* Hero Section */}
-          <ScrollReveal>
-            <HeroPost />
-          </ScrollReveal>
+          {heroPost && (
+            <ScrollReveal>
+              <HeroPost 
+                title={heroPost.title}
+                excerpt={heroExcerpt}
+                slug={heroSlug}
+                date={heroPost.date}
+                readTime={heroPost.readTime}
+                image={heroPost.image}
+                author={heroPost.author}
+                authorImage={heroPost.authorImage}
+              />
+            </ScrollReveal>
+          )}
           
           {/* Category Filter */}
           <ScrollReveal delay={100}>
@@ -87,11 +67,21 @@ export default async function Home() {
           {/* Post Grid */}
           <section className="px-8 py-16">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-              {POSTS.map((post, idx) => (
-                <ScrollReveal key={idx} delay={idx * 50}>
-                  <PostCard {...post} />
-                </ScrollReveal>
-              ))}
+              {gridPosts.map((post, idx) => {
+                const excerptBlock = post.blocks.find(b => b.type === 'body');
+                const excerpt = excerptBlock ? excerptBlock.content : '';
+                return (
+                  <ScrollReveal key={post.id || idx} delay={idx * 50}>
+                    <PostCard 
+                      title={post.title}
+                      excerpt={excerpt}
+                      category={post.category}
+                      date={post.date}
+                      image={post.image}
+                    />
+                  </ScrollReveal>
+                );
+              })}
             </div>
             
             <ScrollReveal>

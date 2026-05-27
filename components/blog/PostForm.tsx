@@ -219,7 +219,7 @@ export default function PostForm({ mode, initialData, postId }: PostFormProps) {
       } else {
         response = await createPost(payload, user.id);
         if (response.success) {
-          savedPostId = response.data.id;
+          savedPostId = response.data?.id ?? savedPostId;
         }
       }
 

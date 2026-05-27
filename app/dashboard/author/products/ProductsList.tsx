@@ -42,7 +42,7 @@ export function ProductsList({ initialProducts }: ProductsListProps) {
       name: '',
       price: 0,
       condition: 'New',
-      category: '',
+      category_names: [],
       image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop', // Default placeholder
     };
     setEditingProduct(newProduct);
@@ -75,7 +75,7 @@ export function ProductsList({ initialProducts }: ProductsListProps) {
 
   const filteredProducts = products.filter((p) => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchQuery.toLowerCase())
+    (p.category_names ?? []).some((c) => c.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
