@@ -9,6 +9,3 @@ export const createClient = () =>
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
-
-// Note: For Server Components, use a separate server-side client implementation
-// typically found in lib/supabase/server.ts using createServerClient.

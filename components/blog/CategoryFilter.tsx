@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
 import { useJournalStore } from '@/lib/store';
 
 const categories = [
@@ -15,15 +15,14 @@ export const CategoryFilter = () => {
     <div className="flex flex-wrap items-center gap-3 py-8 px-8 border-b border-zinc-100">
       <span className="text-sm font-medium text-zinc-400 mr-2">Browse:</span>
       {categories.map((cat) => (
-        <Button
+        <Badge
           key={cat}
-          variant={activeCategory === cat ? 'primary' : 'secondary'}
-          size="sm"
+          variant={activeCategory === cat ? 'active' : 'secondary'}
           onClick={() => setActiveCategory(cat)}
-          className="text-[12px] px-4 py-2"
+          className="px-5 py-2 text-sm"
         >
           {cat}
-        </Button>
+        </Badge>
       ))}
     </div>
   );
