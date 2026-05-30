@@ -1,4 +1,4 @@
-import type { Post, ContentBlock } from '@/types/post';
+import type { Post, PostStatus, ContentBlock } from '@/types/post';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Error types
@@ -33,11 +33,13 @@ export interface BlogPostRow {
   category: string;
   image: string;
   read_time: string;
-  status: string;
+  status: PostStatus;
   blocks: unknown; // Raw JSONB — parsed below
   author_id: string;
   created_at: string;
   updated_at: string;
+  /** Admin-written feedback when a post is rejected. */
+  rejection_remarks?: string | null;
   profiles?:
     | { display_name: string | null; avatar_url: string | null }
     | { display_name: string | null; avatar_url: string | null }[];
@@ -83,6 +85,7 @@ export function postRowToPost(row: BlogPostRow): Post {
     readTime: row.read_time,
     status: row.status,
     blocks: blocksList,
+    rejectionRemarks: row.rejection_remarks ?? undefined,
   };
 }
 

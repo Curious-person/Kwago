@@ -124,25 +124,31 @@ export async function deletePost(id: string): Promise<PostServiceResponse<void>>
 
 /**
  * Allows an admin to review a community blog post.
- * Updates the status to 'Published' (approve) or 'Draft' (reject).
  *
- * @param id - Post UUID to review
- * @param action - 'approve' to publish the post, 'reject' to keep as draft
- * @returns Promise<PostServiceResponse<Post>> - Updated post or error
+ * - approve → sets status to 'Published' and clears any prior rejection_remarks.
+ * - reject  → sets status to 'Rejected' and persists the provided remarks.
+ *
+ * @param id      - Post UUID to review
+ * @param action  - 'approve' to publish, 'reject' to reject with remarks
+ * @param remarks - Optional admin feedback (shown to author on rejection)
  */
 export async function adminReviewPost(
   id: string,
-  action: 'approve' | 'reject'
+  action: 'approve' | 'reject',
+  remarks?: string
 ): Promise<PostServiceResponse<Post>> {
   try {
     console.log(`[adminReviewPost] Admin reviewing post ${id} with action: ${action}`);
 
-    const newStatus = action === 'approve' ? 'Published' : 'Draft';
+    const newStatus = action === 'approve' ? 'Published' : 'Rejected';
     const supabase = createClient();
 
     const { data, error } = await supabase
       .from('blog_posts')
-      .update({ status: newStatus })
+      .update({
+        status: newStatus,
+        rejection_remarks: action === 'reject' ? (remarks?.trim() ?? null) : null,
+      })
       .eq('id', id)
       .select('*, profiles:author_id(display_name, avatar_url)')
       .single();
@@ -175,4 +181,5 @@ export async function adminReviewPost(
     };
   }
 }
+
 

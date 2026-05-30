@@ -91,14 +91,43 @@ export default function AuthorPostsTable({ initialPosts }: AuthorPostsTableProps
       header: 'Status',
       accessorKey: 'status',
       filterable: true,
-      cell: (row) => (
-        <div className="flex items-center gap-1.5">
-          <div className={`w-1.5 h-1.5 rounded-full ${row.status === 'Published' ? 'bg-[#0066FF]' : 'bg-zinc-300'}`} />
-          <span className={`text-xs font-bold ${row.status === 'Published' ? 'text-zinc-900' : 'text-zinc-400'}`}>
-            {row.status}
-          </span>
-        </div>
-      ),
+      cell: (row) => {
+        const s = row.status?.toLowerCase();
+        if (s === 'published') {
+          return (
+            <Badge variant="default" className="font-bold text-[10px] uppercase tracking-widest rounded-full px-3 py-1 bg-green-500 text-white border-none">
+              Published
+            </Badge>
+          );
+        }
+        if (s === 'ai_rejected' || s === 'ai-declined' || s === 'rejected') {
+          return (
+            <Badge variant="outline" className="font-bold text-[10px] uppercase tracking-widest rounded-full px-3 py-1 text-red-600 border-red-200 bg-red-50">
+              AI Rejected
+            </Badge>
+          );
+        }
+        if (s === 'ai_approved' || s === 'ai-approved') {
+          return (
+            <Badge variant="outline" className="font-bold text-[10px] uppercase tracking-widest rounded-full px-3 py-1 text-blue-600 border-blue-200 bg-blue-50">
+              AI Approved
+            </Badge>
+          );
+        }
+        if (s === 'pending_review' || s === 'pending_admin' || s === 'pending') {
+          return (
+            <Badge variant="outline" className="font-bold text-[10px] uppercase tracking-widest rounded-full px-3 py-1 text-amber-600 border-amber-200 bg-amber-50">
+              Pending Admin
+            </Badge>
+          );
+        }
+        // Fallback for 'Draft' (standard draft pending admin approval since AI check already passed in UI)
+        return (
+          <Badge variant="outline" className="font-bold text-[10px] uppercase tracking-widest rounded-full px-3 py-1 text-blue-600 border-blue-200 bg-blue-50">
+            AI Approved • Pending Admin
+          </Badge>
+        );
+      },
     },
     {
       header: 'Actions',
@@ -189,14 +218,27 @@ export default function AuthorPostsTable({ initialPosts }: AuthorPostsTableProps
                     <span className="text-[10px] text-zinc-400 font-medium">{selectedPost.date}</span>
                   </div>
                   <Badge 
-                    variant="secondary" 
-                    className={`ml-auto text-[10px] font-bold uppercase tracking-wider rounded-full px-2.5 py-0.5 border-none ${
+                    variant="outline"
+                    className={`ml-auto text-[10px] font-bold uppercase tracking-wider rounded-full px-2.5 py-0.5 ${
                       selectedPost.status === 'Published' 
-                        ? 'bg-[#0066FF]/10 text-[#0066FF] hover:bg-[#0066FF]/15' 
-                        : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+                        ? 'bg-green-500 text-white border-none' 
+                        : ['ai_rejected', 'ai-declined', 'rejected'].includes(selectedPost.status?.toLowerCase() || '')
+                        ? 'bg-red-50 text-red-600 border border-red-200'
+                        : ['ai_approved', 'ai-approved'].includes(selectedPost.status?.toLowerCase() || '')
+                        ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                        : ['pending_review', 'pending_admin', 'pending'].includes(selectedPost.status?.toLowerCase() || '')
+                        ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                        : 'bg-blue-50 text-blue-600 border border-blue-200'
                     }`}
                   >
-                    {selectedPost.status}
+                    {(() => {
+                      const s = selectedPost.status?.toLowerCase();
+                      if (s === 'published') return 'Published';
+                      if (s === 'ai_rejected' || s === 'ai-declined' || s === 'rejected') return 'AI Rejected';
+                      if (s === 'ai_approved' || s === 'ai-approved') return 'AI Approved';
+                      if (s === 'pending_review' || s === 'pending_admin' || s === 'pending') return 'Pending Admin';
+                      return 'AI Approved • Pending Admin';
+                    })()}
                   </Badge>
                 </div>
               </div>

@@ -104,6 +104,11 @@ export default function PostForm({ mode, initialData, postId }: PostFormProps) {
   const [draggedBlockIndex, setDraggedBlockIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  // AI Review Simulation State
+  const [aiStatus, setAiStatus] = useState<'processing' | 'approved'>('processing');
+  const [countdown, setCountdown] = useState(60);
+  const [currentPostId, setCurrentPostId] = useState<string | null>(postId ?? null);
+
   // Product linking
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
@@ -124,6 +129,34 @@ export default function PostForm({ mode, initialData, postId }: PostFormProps) {
     };
     loadProducts();
   }, []);
+
+  // -------------------------------------------------------------------------
+  // Simulate AI Processing Timer
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      setAiStatus('processing');
+      setCountdown(60);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setAiStatus('approved');
+          if (currentPostId) {
+            updatePost(currentPostId, { status: 'ai_approved' }).catch(console.error);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isModalOpen, currentPostId]);
 
   // -------------------------------------------------------------------------
   // Product selection
@@ -231,6 +264,8 @@ export default function PostForm({ mode, initialData, postId }: PostFormProps) {
         setIsSaving(false);
         return;
       }
+
+      setCurrentPostId(savedPostId ?? null);
 
       // Link selected products to the post
       if (savedPostId && selectedProductIds.length > 0) {
@@ -678,34 +713,74 @@ export default function PostForm({ mode, initialData, postId }: PostFormProps) {
                 <div className="space-y-10 relative">
                   {/* Step 1 */}
                   <div className="flex gap-5 group">
-                    <div className="relative z-10 w-8 h-8 rounded-full bg-[#0066FF] border-4 border-white flex items-center justify-center transition-transform group-hover:scale-110">
-                      <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    <div className={cn(
+                      "relative z-10 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center transition-transform",
+                      aiStatus === 'processing' ? "bg-[#0066FF] group-hover:scale-110" : "bg-green-500"
+                    )}>
+                      {aiStatus === 'processing' ? (
+                        <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                      ) : (
+                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
                     </div>
                     <div className="space-y-1.5 flex-1">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-bold text-zinc-900">AI Quality Analysis</h4>
                         <Badge
                           variant="secondary"
-                          className="bg-[#0066FF]/5 text-[#0066FF] border-none text-[10px] px-2"
+                          className={cn(
+                            "border-none text-[10px] px-2 transition-colors",
+                            aiStatus === 'processing' 
+                              ? "bg-[#0066FF]/5 text-[#0066FF]" 
+                              : "bg-green-500/10 text-green-600"
+                          )}
                         >
-                          Processing
+                          {aiStatus === 'processing' ? `Processing (${countdown}s)` : 'Approved'}
                         </Badge>
                       </div>
                       <p className="text-xs text-zinc-500 leading-relaxed">
-                        Scanning for authenticity and formatting. This usually takes about 60
-                        seconds.
+                        {aiStatus === 'processing'
+                          ? `Scanning for authenticity and formatting. Estimated time remaining: ${countdown} seconds.`
+                          : 'Quality checks passed. Ready for human review.'}
                       </p>
                     </div>
                   </div>
 
                   {/* Step 2 */}
                   <div className="flex gap-5 group">
-                    <div className="relative z-10 w-8 h-8 rounded-full bg-zinc-100 border-4 border-white flex items-center justify-center transition-transform group-hover:scale-110">
-                      <div className="w-2 h-2 rounded-full bg-zinc-300" />
+                    <div className={cn(
+                      "relative z-10 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center transition-transform",
+                      aiStatus === 'approved' ? "bg-[#0066FF] group-hover:scale-110" : "bg-zinc-100"
+                    )}>
+                      {aiStatus === 'approved' ? (
+                        <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                      ) : (
+                        <div className="w-2 h-2 rounded-full bg-zinc-300" />
+                      )}
                     </div>
                     <div className="space-y-1.5 flex-1">
-                      <h4 className="text-sm font-bold text-zinc-400">Editorial Admin Review</h4>
-                      <p className="text-xs text-zinc-400 leading-relaxed">
+                      <div className="flex items-center justify-between">
+                        <h4 className={cn(
+                          "text-sm font-bold transition-colors",
+                          aiStatus === 'approved' ? "text-zinc-900" : "text-zinc-400"
+                        )}>
+                          Editorial Admin Review
+                        </h4>
+                        {aiStatus === 'approved' && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-[#0066FF]/5 text-[#0066FF] border-none text-[10px] px-2"
+                          >
+                            Pending
+                          </Badge>
+                        )}
+                      </div>
+                      <p className={cn(
+                        "text-xs leading-relaxed transition-colors",
+                        aiStatus === 'approved' ? "text-zinc-500" : "text-zinc-400"
+                      )}>
                         Final verification by our human curators before the guide goes live on the
                         journal.
                       </p>

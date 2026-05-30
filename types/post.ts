@@ -10,6 +10,21 @@ export interface ContentBlock {
   content: string;
 }
 
+/**
+ * All possible values for a blog post's lifecycle status.
+ *  - Draft         : Initial state after author submits.
+ *  - admin_pending : Submitted by user, awaiting admin review (no AI step).
+ *  - ai_approved   : Passed AI moderation, awaiting admin sign-off.
+ *  - Published     : Admin approved — visible on the public homepage.
+ *  - Rejected      : Admin rejected with optional remarks.
+ */
+export type PostStatus =
+  | 'Draft'
+  | 'admin_pending'
+  | 'ai_approved'
+  | 'Published'
+  | 'Rejected';
+
 export interface Post {
   id: string;
   title: string;
@@ -19,8 +34,10 @@ export interface Post {
   author: string;
   authorImage: string;
   readTime: string;
-  status: string;
+  status: PostStatus;
   blocks: ContentBlock[];
+  /** Admin remarks written when rejecting a post. */
+  rejectionRemarks?: string;
 }
 
 /** Subset used when creating — no id / date / status yet */
