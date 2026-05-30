@@ -6,6 +6,8 @@
  * Requirements: 14.4, 14.5
  */
 
+import { describe, it, expect, vi as jest, beforeEach } from 'vitest';
+
 import {
     getCachedCategories,
     saveCategoriesToCache,

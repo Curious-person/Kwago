@@ -6,6 +6,9 @@
  * Requirements: 14.1, 14.2, 14.3, 14.4, 14.5
  */
 
+import { describe, it, expect } from 'vitest';
+import { addCategoryToCache, updateCategoryInCache, removeCategoryFromCache, isCacheStale } from '../../lib/services/categoryCache';
+
 describe('Category Management Performance', () => {
     describe('Page Load Performance', () => {
         it('should load categories within 2 seconds (requirement 14.1)', () => {

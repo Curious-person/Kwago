@@ -139,7 +139,7 @@ describe('CategoryCard - Property-Based Tests', () => {
                     (count) => {
                         const text = getExpectedProductCountText(count);
                         const numberMatch = text.match(/\d+/);
-                        return numberMatch && parseInt(numberMatch[0]) >= 0;
+                        return numberMatch !== null && parseInt(numberMatch[0]) >= 0;
                     }
                 ),
                 { numRuns: 100 }

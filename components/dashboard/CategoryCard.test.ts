@@ -34,25 +34,25 @@ describe('CategoryCard Component Logic', () => {
 
     describe('Product Count Badge Formatting', () => {
         it('should format product count as "N products" for plural', () => {
-            const count = 5;
+            const count: number = 5;
             const text = `${count} ${count === 1 ? 'product' : 'products'}`;
             expect(text).toBe('5 products');
         });
 
         it('should format product count as "1 product" for singular', () => {
-            const count = 1;
+            const count: number = 1;
             const text = `${count} ${count === 1 ? 'product' : 'products'}`;
             expect(text).toBe('1 product');
         });
 
         it('should format product count as "0 products" for zero', () => {
-            const count = 0;
+            const count: number = 0;
             const text = `${count} ${count === 1 ? 'product' : 'products'}`;
             expect(text).toBe('0 products');
         });
 
         it('should format product count correctly for large numbers', () => {
-            const count = 100;
+            const count: number = 100;
             const text = `${count} ${count === 1 ? 'product' : 'products'}`;
             expect(text).toBe('100 products');
         });
@@ -95,7 +95,7 @@ describe('CategoryCard Component Logic', () => {
 
     describe('"+N more" Indicator Calculation', () => {
         it('should calculate "+N more" as product_count - 3 when count > 3', () => {
-            const count = 5;
+            const count: number = 5;
             const moreCount = Math.max(0, count - 3);
             expect(moreCount).toBe(2);
         });
@@ -107,13 +107,13 @@ describe('CategoryCard Component Logic', () => {
         });
 
         it('should return 0 when product_count is 0', () => {
-            const count = 0;
+            const count: number = 0;
             const moreCount = Math.max(0, count - 3);
             expect(moreCount).toBe(0);
         });
 
         it('should return 0 when product_count is 1', () => {
-            const count = 1;
+            const count: number = 1;
             const moreCount = Math.max(0, count - 3);
             expect(moreCount).toBe(0);
         });
@@ -125,7 +125,7 @@ describe('CategoryCard Component Logic', () => {
         });
 
         it('should calculate correctly for large product counts', () => {
-            const count = 100;
+            const count: number = 100;
             const moreCount = Math.max(0, count - 3);
             expect(moreCount).toBe(97);
         });
@@ -140,28 +140,28 @@ describe('CategoryCard Component Logic', () => {
 
     describe('"No products yet" Placeholder Logic', () => {
         it('should show placeholder when product_count is 0 and no images', () => {
-            const count = 0;
+            const count: number = 0;
             const images: string[] = [];
             const shouldShow = count === 0 && images.length === 0;
             expect(shouldShow).toBe(true);
         });
 
         it('should not show placeholder when product_count > 0', () => {
-            const count = 5;
+            const count: number = 5;
             const images = mockCategory.product_images;
             const shouldShow = count === 0 && images.length === 0;
             expect(shouldShow).toBe(false);
         });
 
         it('should not show placeholder when images exist', () => {
-            const count = 0;
+            const count: number = 0;
             const images = ['https://images.unsplash.com/photo-1531279554141-7dfdb443c375?q=80&w=400'];
             const shouldShow = count === 0 && images.length === 0;
             expect(shouldShow).toBe(false);
         });
 
         it('should not show placeholder when product_count > 0 and no images', () => {
-            const count = 5;
+            const count: number = 5;
             const images: string[] = [];
             const shouldShow = count === 0 && images.length === 0;
             expect(shouldShow).toBe(false);
@@ -245,8 +245,8 @@ describe('CategoryCard Component Logic', () => {
 
     describe('Boundary Cases', () => {
         it('should handle boundary between 0 and 1 products', () => {
-            const zero = 0;
-            const one = 1;
+            const zero: number = 0;
+            const one: number = 1;
             const zeroText = `${zero} ${zero === 1 ? 'product' : 'products'}`;
             const oneText = `${one} ${one === 1 ? 'product' : 'products'}`;
             expect(zeroText).toBe('0 products');
@@ -254,8 +254,8 @@ describe('CategoryCard Component Logic', () => {
         });
 
         it('should handle boundary between 1 and 2 products', () => {
-            const one = 1;
-            const two = 2;
+            const one: number = 1;
+            const two: number = 2;
             const oneText = `${one} ${one === 1 ? 'product' : 'products'}`;
             const twoText = `${two} ${two === 1 ? 'product' : 'products'}`;
             expect(oneText).toBe('1 product');

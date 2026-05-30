@@ -17,7 +17,7 @@ describe('CreateCategoryModal - Property-Based Tests', () => {
      * Generates strings that should pass validation
      */
     const validCategoryNameArbitrary = () =>
-        fc.stringMatching(/^[^\s].*[^\s]$|^[^\s]$/, { minLength: 1, maxLength: 100 })
+        fc.stringMatching(/^[^\s].*[^\s]$|^[^\s]$/)
             .filter(s => s.trim().length > 0 && s.trim().length <= 100);
 
     /**
@@ -27,7 +27,7 @@ describe('CreateCategoryModal - Property-Based Tests', () => {
     const invalidEmptyCategoryNameArbitrary = () =>
         fc.oneof(
             fc.constant(''),
-            fc.stringMatching(/^\s+$/, { minLength: 1, maxLength: 100 })
+            fc.stringMatching(/^\s+$/).filter(s => s.length >= 1 && s.length <= 100)
         );
 
     /**
@@ -105,7 +105,7 @@ describe('CreateCategoryModal - Property-Based Tests', () => {
             it('should reject mixed whitespace', () => {
                 fc.assert(
                     fc.property(
-                        fc.stringMatching(/^[\s]+$/, { minLength: 1, maxLength: 50 }),
+                        fc.stringMatching(/^[\s]+$/).filter(s => s.length >= 1 && s.length <= 50),
                         (name) => {
                             const result = validateCategoryName(name);
                             return result.isValid === false && result.error === 'Category name is required';

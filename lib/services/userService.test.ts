@@ -143,7 +143,7 @@ describe('validateUser', () => {
     describe('Missing required fields', () => {
         it('should fail validation if id is missing', () => {
             const user = { ...validUser };
-            delete user.id;
+            delete (user as any).id;
             const result = validateUser(user);
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -154,7 +154,7 @@ describe('validateUser', () => {
 
         it('should fail validation if email is missing', () => {
             const user = { ...validUser };
-            delete user.email;
+            delete (user as any).email;
             const result = validateUser(user);
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -165,7 +165,7 @@ describe('validateUser', () => {
 
         it('should fail validation if display_name is missing', () => {
             const user = { ...validUser };
-            delete user.display_name;
+            delete (user as any).display_name;
             const result = validateUser(user);
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -176,7 +176,7 @@ describe('validateUser', () => {
 
         it('should fail validation if role is missing', () => {
             const user = { ...validUser };
-            delete user.role;
+            delete (user as any).role;
             const result = validateUser(user);
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -187,7 +187,7 @@ describe('validateUser', () => {
 
         it('should fail validation if status is missing', () => {
             const user = { ...validUser };
-            delete user.status;
+            delete (user as any).status;
             const result = validateUser(user);
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -198,7 +198,7 @@ describe('validateUser', () => {
 
         it('should fail validation if created_at is missing', () => {
             const user = { ...validUser };
-            delete user.created_at;
+            delete (user as any).created_at;
             const result = validateUser(user);
             expect(result.success).toBe(false);
             if (!result.success) {
@@ -1907,7 +1907,7 @@ describe('Integration Tests - getUsers', () => {
                 for (let i = 0; i < result.data.data.length - 1; i++) {
                     const current = new Date(result.data.data[i].created_at).getTime();
                     const next = new Date(result.data.data[i + 1].created_at).getTime();
-                    expect(current).toGreaterThanOrEqual(next);
+                    expect(current).toBeGreaterThanOrEqual(next);
                 }
             }
         });
@@ -2023,7 +2023,9 @@ describe('Integration Tests - updateUserRole', () => {
             const result = await updateUserRole('', 'author');
 
             expect(result.success).toBe(false);
-            expect(result.error.code).toBe('VALIDATION_ERROR');
+            if (!result.success) {
+                expect(result.error.code).toBe('VALIDATION_ERROR');
+            }
         });
 
         it('should return error on invalid role', async () => {
@@ -2031,7 +2033,9 @@ describe('Integration Tests - updateUserRole', () => {
             const result = await updateUserRole(testUserId, 'invalid' as any);
 
             expect(result.success).toBe(false);
-            expect(result.error.code).toBe('VALIDATION_ERROR');
+            if (!result.success) {
+                expect(result.error.code).toBe('VALIDATION_ERROR');
+            }
         });
     });
 });
@@ -2099,7 +2103,9 @@ describe('Integration Tests - updateUserStatus', () => {
             const result = await updateUserStatus('', 'suspended');
 
             expect(result.success).toBe(false);
-            expect(result.error.code).toBe('VALIDATION_ERROR');
+            if (!result.success) {
+                expect(result.error.code).toBe('VALIDATION_ERROR');
+            }
         });
 
         it('should return error on invalid status', async () => {
@@ -2107,7 +2113,9 @@ describe('Integration Tests - updateUserStatus', () => {
             const result = await updateUserStatus(testUserId, 'invalid' as any);
 
             expect(result.success).toBe(false);
-            expect(result.error.code).toBe('VALIDATION_ERROR');
+            if (!result.success) {
+                expect(result.error.code).toBe('VALIDATION_ERROR');
+            }
         });
     });
 });
