@@ -21,30 +21,32 @@ components/<domain>/
 ```
 
 ### Why
-| Concern | One component |
-|---|---|
-| DRY | A single block of UI / logic to maintain |
-| Consistency | Create and Edit always look and behave the same |
-| Type-safety | One set of prop types reviewed in one place |
+
+| Concern     | One component                                    |
+| ----------- | ------------------------------------------------ |
+| DRY         | A single block of UI / logic to maintain         |
+| Consistency | Create and Edit always look and behave the same  |
+| Type-safety | One set of prop types reviewed in one place      |
 | Testability | Unit-test one component, not two near-duplicates |
 
 ---
 
 ## Reference implementation — Posts
 
-| File | Role |
-|---|---|
-| [`types/post.ts`](../types/post.ts) | Domain types (`Post`, `ContentBlock`, `BlockType`) |
-| [`lib/data/posts.ts`](../lib/data/posts.ts) | Mock data (replace with Supabase fetch later) |
-| [`components/blog/PostForm.tsx`](../components/blog/PostForm.tsx) | Shared form component |
-| [`app/dashboard/author/posts/new/page.tsx`](../app/dashboard/author/posts/new/page.tsx) | Create wrapper |
-| [`app/dashboard/author/posts/[id]/edit/page.tsx`](../app/dashboard/author/posts/%5Bid%5D/edit/page.tsx) | Edit wrapper |
+| File                                                                                                    | Role                                               |
+| ------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| [`types/post.ts`](../types/post.ts)                                                                     | Domain types (`Post`, `ContentBlock`, `BlockType`) |
+| [`lib/data/posts.ts`](../lib/data/posts.ts)                                                             | Mock data (replace with Supabase fetch later)      |
+| [`components/blog/PostForm.tsx`](../components/blog/PostForm.tsx)                                       | Shared form component                              |
+| [`app/dashboard/author/posts/new/page.tsx`](../app/dashboard/author/posts/new/page.tsx)                 | Create wrapper                                     |
+| [`app/dashboard/author/posts/[id]/edit/page.tsx`](../app/dashboard/author/posts/%5Bid%5D/edit/page.tsx) | Edit wrapper                                       |
 
 ---
 
 ## Step-by-step guide for a new module
 
 ### 1 — Define types
+
 Create `types/<resource>.ts` and export the domain interface plus any subtypes.
 
 ```ts
@@ -57,55 +59,66 @@ export interface Product {
 ```
 
 ### 2 — Centralise mock / seed data
+
 Put sample records in `lib/data/<resource>.ts` and export a named array constant.
 
 ```ts
 // lib/data/products.ts
-import { Product } from '@/types/product';
-export const MOCK_PRODUCTS: Product[] = [ /* ... */ ];
+import { Product } from "@/types/product";
+export const MOCK_PRODUCTS: Product[] = [
+  /* ... */
+];
 ```
 
 ### 3 — Build `<ResourceForm />`
+
 Create `components/<domain>/ResourceForm.tsx`.
 
 #### Required props shape
+
 ```tsx
 interface ResourceFormProps {
-  mode: 'create' | 'edit';
-  initialData?: Resource;   // only in edit mode
-  resourceId?: string;      // only in edit mode
+  mode: "create" | "edit";
+  initialData?: Resource; // only in edit mode
+  resourceId?: string; // only in edit mode
 }
 ```
 
 #### State initialisation
+
 ```tsx
 const [fields, setFields] = useState({
-  name: initialData?.name ?? '',
+  name: initialData?.name ?? "",
   // ... rest of fields
 });
 ```
+
 Using `??` (nullish coalescing) means edit mode pre-fills with real values while
 create mode gets sensible defaults.
 
 #### Mode-aware copy
+
 Put all user-facing strings that differ between modes in one object:
+
 ```tsx
 const copy = {
-  pageTitle:  mode === 'edit' ? 'Edit Product'   : 'Add Product',
-  saveLabel:  mode === 'edit' ? 'Update Product' : 'Publish Product',
+  pageTitle: mode === "edit" ? "Edit Product" : "Add Product",
+  saveLabel: mode === "edit" ? "Update Product" : "Publish Product",
   // ...
 };
 ```
 
 #### Save handler
+
 Branch on `mode` in one `handleSave` function — do not duplicate the function:
+
 ```tsx
 const handleSave = () => {
-  if (mode === 'edit') {
+  if (mode === "edit") {
     console.log(`Updating ${resourceId}:`, fields);
     // call update service
   } else {
-    console.log('Creating:', fields);
+    console.log("Creating:", fields);
     // call create service
   }
 };
@@ -114,10 +127,11 @@ const handleSave = () => {
 ### 4 — Write thin route pages
 
 **Create page** — zero logic, just renders the form:
+
 ```tsx
 // app/dashboard/.../new/page.tsx
-'use client';
-import ResourceForm from '@/components/<domain>/ResourceForm';
+"use client";
+import ResourceForm from "@/components/<domain>/ResourceForm";
 
 export default function NewResourcePage() {
   return <ResourceForm mode="create" />;
@@ -125,12 +139,13 @@ export default function NewResourcePage() {
 ```
 
 **Edit page** — fetch or look up by id, then pass as initialData:
+
 ```tsx
 // app/dashboard/....[id]/edit/page.tsx
-'use client';
-import { useParams } from 'next/navigation';
-import ResourceForm from '@/components/<domain>/ResourceForm';
-import { MOCK_RESOURCES } from '@/lib/data/<resource>';
+"use client";
+import { useParams } from "next/navigation";
+import ResourceForm from "@/components/<domain>/ResourceForm";
+import { MOCK_RESOURCES } from "@/lib/data/<resource>";
 
 export default function EditResourcePage() {
   const { id } = useParams();
@@ -138,7 +153,13 @@ export default function EditResourcePage() {
 
   if (!resource) return <p>Not found.</p>;
 
-  return <ResourceForm mode="edit" resourceId={id as string} initialData={resource} />;
+  return (
+    <ResourceForm
+      mode="edit"
+      resourceId={id as string}
+      initialData={resource}
+    />
+  );
 }
 ```
 

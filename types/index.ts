@@ -2,11 +2,11 @@
 // RBAC
 // ----------------------------------------------------------------
 
-export type UserRole = 'member' | 'author' | 'admin';
+export type UserRole = "member" | "author" | "admin";
 
-export type PostStatus = 'draft' | 'published' | 'archived';
+export type PostStatus = "draft" | "published" | "archived";
 
-export type CommentStatus = 'pending' | 'approved' | 'rejected';
+export type CommentStatus = "pending" | "approved" | "rejected";
 
 export interface Profile {
   id: string;
@@ -14,7 +14,7 @@ export interface Profile {
   display_name: string | null;
   avatar_url: string | null;
   role: UserRole;
-  status: 'active' | 'suspended';
+  status: "active" | "suspended";
   created_at: string;
   updated_at: string;
 }
@@ -28,7 +28,7 @@ export interface Product {
   name: string;
   slug: string;
   price: number;
-  condition: 'New' | 'Used';
+  condition: "New" | "Used";
   category: string;
   description: string;
   images: string[];
@@ -51,7 +51,7 @@ export interface BlogPost {
   category: string;
   /** Lowercase values are canonical going forward ('draft' | 'published' | 'archived').
    *  Title-case variants ('Draft' | 'Published') may appear in legacy seed rows. */
-  status: PostStatus | 'Draft' | 'Published' | 'Archived';
+  status: PostStatus | "Draft" | "Published" | "Archived";
   author_id: string | null;
   created_at: string;
 }

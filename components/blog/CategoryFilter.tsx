@@ -1,11 +1,15 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Badge } from '../ui/Badge';
-import { useJournalStore } from '@/lib/store';
+import React from "react";
+import { Badge } from "../ui/Badge";
+import { useJournalStore } from "@/lib/store";
 
 const categories = [
-  'All Posts', 'Productivity', 'Design', 'Philosophy', 'Technology'
+  "All Posts",
+  "Productivity",
+  "Design",
+  "Philosophy",
+  "Technology",
 ];
 
 export const CategoryFilter = () => {
@@ -17,7 +21,7 @@ export const CategoryFilter = () => {
       {categories.map((cat) => (
         <Badge
           key={cat}
-          variant={activeCategory === cat ? 'active' : 'secondary'}
+          variant={activeCategory === cat ? "active" : "secondary"}
           onClick={() => setActiveCategory(cat)}
           className="px-5 py-2 text-sm"
         >

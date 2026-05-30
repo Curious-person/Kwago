@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   LayoutGrid,
   FileText,
@@ -11,11 +11,11 @@ import {
   ShoppingBag,
   Folder,
   ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
-import { SidebarLink } from './SidebarLink';
-import { cn } from '@/lib/utils';
-import { Button } from '../ui/Button';
+  ChevronRight,
+} from "lucide-react";
+import { SidebarLink } from "./SidebarLink";
+import { cn } from "@/lib/utils";
+import { Button } from "../ui/Button";
 
 interface SidebarProps {
   isAdmin: boolean;
@@ -30,15 +30,22 @@ export const Sidebar = ({ isAdmin, isAuthor, role }: SidebarProps) => {
     <aside
       className={cn(
         "sticky top-[73px] h-[calc(100vh-73px)] shrink-0 border-r border-zinc-200 flex flex-col pt-8 pb-6 px-4 transition-all duration-300 overflow-y-auto",
-        isCollapsed ? "w-20 px-2" : "w-56"
+        isCollapsed ? "w-20 px-2" : "w-56",
       )}
     >
       {/* Role badge */}
-      <div className={cn("mb-6 px-2 flex justify-center", !isCollapsed && "justify-start")}>
-        <span className={cn(
-          "inline-block rounded-full border border-zinc-200 px-3 py-0.5 text-xs font-medium text-zinc-500 capitalize transition-all",
-          isCollapsed ? "px-1.5 text-[10px]" : ""
-        )}>
+      <div
+        className={cn(
+          "mb-6 px-2 flex justify-center",
+          !isCollapsed && "justify-start",
+        )}
+      >
+        <span
+          className={cn(
+            "inline-block rounded-full border border-zinc-200 px-3 py-0.5 text-xs font-medium text-zinc-500 capitalize transition-all",
+            isCollapsed ? "px-1.5 text-[10px]" : "",
+          )}
+        >
           {isCollapsed ? role.charAt(0) : role}
         </span>
       </div>
@@ -47,16 +54,32 @@ export const Sidebar = ({ isAdmin, isAuthor, role }: SidebarProps) => {
         {/* Author links */}
         {isAuthor && (
           <>
-            <SidebarLink href="/dashboard/author/posts" icon={<FileText size={15} />} isCollapsed={isCollapsed}>
+            <SidebarLink
+              href="/dashboard/author/posts"
+              icon={<FileText size={15} />}
+              isCollapsed={isCollapsed}
+            >
               My Posts
             </SidebarLink>
-            <SidebarLink href="/dashboard/author/products" icon={<Package size={15} />} isCollapsed={isCollapsed}>
+            <SidebarLink
+              href="/dashboard/author/products"
+              icon={<Package size={15} />}
+              isCollapsed={isCollapsed}
+            >
               My Products
             </SidebarLink>
-            <SidebarLink href="/dashboard/author/categories" icon={<Folder size={15} />} isCollapsed={isCollapsed}>
+            <SidebarLink
+              href="/dashboard/author/categories"
+              icon={<Folder size={15} />}
+              isCollapsed={isCollapsed}
+            >
               My Categories
             </SidebarLink>
-            <SidebarLink href="/dashboard/author/sales" icon={<ShoppingBag size={15} />} isCollapsed={isCollapsed}>
+            <SidebarLink
+              href="/dashboard/author/sales"
+              icon={<ShoppingBag size={15} />}
+              isCollapsed={isCollapsed}
+            >
               My Sales
             </SidebarLink>
           </>
@@ -65,19 +88,39 @@ export const Sidebar = ({ isAdmin, isAuthor, role }: SidebarProps) => {
         {/* Admin-only links */}
         {isAdmin && (
           <>
-            <SidebarLink href="/dashboard/admin" icon={<LayoutGrid size={15} />} isCollapsed={isCollapsed}>
+            <SidebarLink
+              href="/dashboard/admin"
+              icon={<LayoutGrid size={15} />}
+              isCollapsed={isCollapsed}
+            >
               Overview
             </SidebarLink>
-            <SidebarLink href="/dashboard/admin/comments" icon={<MessageSquare size={15} />} isCollapsed={isCollapsed}>
+            <SidebarLink
+              href="/dashboard/admin/comments"
+              icon={<MessageSquare size={15} />}
+              isCollapsed={isCollapsed}
+            >
               Comments
             </SidebarLink>
-            <SidebarLink href="/dashboard/admin/posts" icon={<Layers size={15} />} isCollapsed={isCollapsed}>
+            <SidebarLink
+              href="/dashboard/admin/posts"
+              icon={<Layers size={15} />}
+              isCollapsed={isCollapsed}
+            >
               Review Posts
             </SidebarLink>
-            <SidebarLink href="/dashboard/admin/products" icon={<Package size={15} />} isCollapsed={isCollapsed}>
+            <SidebarLink
+              href="/dashboard/admin/products"
+              icon={<Package size={15} />}
+              isCollapsed={isCollapsed}
+            >
               Review Products
             </SidebarLink>
-            <SidebarLink href="/dashboard/admin/users" icon={<Users size={15} />} isCollapsed={isCollapsed}>
+            <SidebarLink
+              href="/dashboard/admin/users"
+              icon={<Users size={15} />}
+              isCollapsed={isCollapsed}
+            >
               Users
             </SidebarLink>
           </>

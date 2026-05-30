@@ -50,6 +50,7 @@ If the table was partially created and you're getting errors, use the clean inst
    - Click **"Run"**
 
 This version will:
+
 - Drop any existing products table
 - Drop any existing functions/triggers
 - Create everything fresh
@@ -59,35 +60,44 @@ This version will:
 After running the schema, verify it worked:
 
 #### 1. Check Table Exists
+
 Run this query in SQL Editor:
+
 ```sql
 SELECT * FROM public.products LIMIT 1;
 ```
+
 Expected: Empty result (no error)
 
 #### 2. Check RLS is Enabled
+
 ```sql
 SELECT tablename, rowsecurity
 FROM pg_tables
 WHERE schemaname = 'public' AND tablename = 'products';
 ```
+
 Expected: `rowsecurity = true`
 
 #### 3. Check Policies Exist
+
 ```sql
 SELECT policyname, cmd
 FROM pg_policies
 WHERE tablename = 'products';
 ```
+
 Expected: 4 policies (SELECT, INSERT, UPDATE, DELETE)
 
 #### 4. Check Columns
+
 ```sql
 SELECT column_name, data_type, is_nullable
 FROM information_schema.columns
 WHERE table_name = 'products'
 ORDER BY ordinal_position;
 ```
+
 Expected: All columns listed (id, name, price, condition, image, category, description, author_id, created_at, updated_at)
 
 ### Test Product Creation
@@ -119,6 +129,7 @@ If you still get errors:
 The issue was in the function definition:
 
 **Before (BROKEN):**
+
 ```sql
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $
@@ -130,6 +141,7 @@ $ LANGUAGE plpgsql;
 ```
 
 **After (FIXED):**
+
 ```sql
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -144,11 +156,11 @@ The delimiter must be `$$` (double dollar signs), not `$` (single).
 
 ## Quick Reference
 
-| File | Purpose | When to Use |
-|------|---------|-------------|
-| `database/products_schema.sql` | Fixed schema with IF NOT EXISTS | First install or safe re-run |
+| File                                 | Purpose                            | When to Use                       |
+| ------------------------------------ | ---------------------------------- | --------------------------------- |
+| `database/products_schema.sql`       | Fixed schema with IF NOT EXISTS    | First install or safe re-run      |
 | `database/products_schema_fixed.sql` | Clean install with DROP statements | When you need to completely reset |
-| `/dashboard/author/products/debug` | Diagnostic page | To test if setup is working |
+| `/dashboard/author/products/debug`   | Diagnostic page                    | To test if setup is working       |
 
 ## Next Steps After Setup
 

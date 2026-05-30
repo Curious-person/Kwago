@@ -5,6 +5,7 @@
 You're getting: `ERROR: 42703: column "author_id" does not exist`
 
 This means either:
+
 1. The table creation is failing
 2. A broken/partial table already exists
 3. The policies are trying to run before the table is created
@@ -28,6 +29,7 @@ If Step 1 shows the table exists but is broken, or if you just want to start fre
 4. You should see: "Table created successfully!" with column_count = 10
 
 **This will:**
+
 - ✅ Remove any broken products table
 - ✅ Remove any broken policies
 - ✅ Create everything fresh
@@ -54,53 +56,67 @@ After running the clean install, verify:
 If you want to install piece by piece to see where it fails:
 
 ### Part 1: Create Table Only
+
 Run `database/products_schema_step_by_step.sql`
+
 - If this fails, **STOP** and share the error
 
 ### Part 2: Add Indexes
+
 Run `database/products_schema_step2.sql`
+
 - Only if Part 1 succeeded
 
 ### Part 3: Add RLS Policies
+
 Run `database/products_schema_step3.sql`
+
 - Only if Part 2 succeeded
 
 ### Part 4: Add Trigger
+
 Run `database/products_schema_step4.sql`
+
 - Only if Part 3 succeeded
 
 ## Common Issues and Solutions
 
 ### Issue: "relation auth.users does not exist"
+
 **Solution:** You're not using Supabase, or auth is not set up. This is unlikely if you're using Supabase.
 
 ### Issue: "permission denied"
+
 **Solution:** Make sure you're running the SQL as the database owner (you should be in Supabase dashboard).
 
 ### Issue: "table already exists"
+
 **Solution:** Use the CLEAN_INSTALL.sql script to drop and recreate.
 
 ### Issue: Still getting "author_id does not exist"
+
 **Possible causes:**
+
 1. The table creation failed silently
 2. You're running an old version of the schema
 3. There's a caching issue
 
 **Solution:**
+
 1. Run `database/diagnose_issue.sql` to see the current state
 2. Run `database/CLEAN_INSTALL.sql` to start fresh
 3. Clear your browser cache and reload
 
 ## Files Reference
 
-| File | Purpose | When to Use |
-|------|---------|-------------|
-| `database/diagnose_issue.sql` | Check current state | First step - diagnose the problem |
-| `database/CLEAN_INSTALL.sql` | Complete fresh install | **RECOMMENDED** - Use this to fix the issue |
-| `database/products_schema_step_by_step.sql` | Create table only | If you want to install step by step |
-| `database/products_schema_step2.sql` | Add indexes | After step 1 succeeds |
-| `database/products_schema_step3.sql` | Add RLS policies | After step 2 succeeds |
-| `database/products_schema_step4.sql` | Add trigger | After step 3 succeeds |
+| File                                        | Purpose                | When to Use                                 |
+| ------------------------------------------- | ---------------------- | ------------------------------------------- |
+| `database/diagnose_issue.sql`               | Check current state    | First step - diagnose the problem           |
+| `database/CLEAN_INSTALL.sql`                | Complete fresh install | **RECOMMENDED** - Use this to fix the issue |
+| `database/products_schema_step_by_step.sql` | Create table only      | If you want to install step by step         |
+| `database/products_schema_step2.sql`        | Add indexes            | After step 1 succeeds                       |
+| `database/products_schema_step3.sql`        | Add RLS policies       | After step 2 succeeds                       |
+| `database/products_schema_step4.sql`        | Add trigger            | After step 3 succeeds                       |
 
 ## Quick Fix (TL;DR)
 

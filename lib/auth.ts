@@ -1,13 +1,15 @@
-import { redirect } from 'next/navigation';
-import { createServerSupabaseClient } from './supabase/server';
-import { UserRole, Profile } from '../types';
+import { redirect } from "next/navigation";
+import { createServerSupabaseClient } from "./supabase/server";
+import { UserRole, Profile } from "../types";
 
 /**
  * Get the currently authenticated user from Supabase Auth.
  */
 export async function getCurrentUser() {
   const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user;
 }
 
@@ -20,9 +22,9 @@ export async function getUserProfile(): Promise<Profile | null> {
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
     .single();
 
   if (error || !data) return null;
@@ -44,6 +46,6 @@ export async function getUserRole(): Promise<UserRole | null> {
 export async function requireRole(allowedRoles: UserRole[]) {
   const role = await getUserRole();
   if (!role || !allowedRoles.includes(role)) {
-    redirect('/unauthorized');
+    redirect("/unauthorized");
   }
 }

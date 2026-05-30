@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Category } from '@/lib/types/category';
-import { CategoryCard } from '@/components/dashboard/CategoryCard';
-import { Button } from '@/components/ui/Button';
+import React from "react";
+import { Category } from "@/lib/types/category";
+import { CategoryCard } from "@/components/dashboard/CategoryCard";
+import { Button } from "@/components/ui/Button";
 
 /**
  * CategoryGrid Component
@@ -16,42 +16,47 @@ import { Button } from '@/components/ui/Button';
  * Requirements: 2.1, 2.2, 2.3, 2.4, 7.1, 7.2, 8.1, 9.8, 14.1
  */
 interface CategoryGridProps {
-    categories: Category[];
-    onEdit: (category: Category) => void;
-    onDelete: (category: Category) => void;
-    onViewProducts: (categoryId: string) => void;
+  categories: Category[];
+  onEdit: (category: Category) => void;
+  onDelete: (category: Category) => void;
+  onViewProducts: (categoryId: string) => void;
 }
 
-export const CategoryGrid: React.FC<CategoryGridProps> = React.memo(({
-    categories,
-    onEdit,
-    onDelete,
-    onViewProducts,
-}) => {
+export const CategoryGrid: React.FC<CategoryGridProps> = React.memo(
+  ({ categories, onEdit, onDelete, onViewProducts }) => {
     // Empty state
     if (categories.length === 0) {
-        return (
-            <div className="text-center py-12 sm:py-16">
-                <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 mb-4">No categories yet</h2>
-                <p className="text-sm sm:text-base text-zinc-600 mb-8">Create your first category to get started.</p>
-            </div>
-        );
+      return (
+        <div className="text-center py-12 sm:py-16">
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 mb-4">
+            No categories yet
+          </h2>
+          <p className="text-sm sm:text-base text-zinc-600 mb-8">
+            Create your first category to get started.
+          </p>
+        </div>
+      );
     }
 
     // Grid layout: 1 column (mobile), 2 columns (tablet), 3 columns (desktop)
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8" role="region" aria-label="Categories grid">
-            {categories.map(category => (
-                <CategoryCard
-                    key={category.id}
-                    category={category}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                    onViewProducts={onViewProducts}
-                />
-            ))}
-        </div>
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8"
+        role="region"
+        aria-label="Categories grid"
+      >
+        {categories.map((category) => (
+          <CategoryCard
+            key={category.id}
+            category={category}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onViewProducts={onViewProducts}
+          />
+        ))}
+      </div>
     );
-});
+  },
+);
 
-CategoryGrid.displayName = 'CategoryGrid';
+CategoryGrid.displayName = "CategoryGrid";

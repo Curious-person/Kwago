@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Product } from '@/types/product';
-import { RelatedProductCard } from '@/components/blog/RelatedProductCard';
-import { ProductDetailSheet } from '@/components/shop/ProductDetailSheet';
+import React, { useState } from "react";
+import { Product } from "@/types/product";
+import { RelatedProductCard } from "@/components/blog/RelatedProductCard";
+import { ProductDetailSheet } from "@/components/shop/ProductDetailSheet";
 
 interface RelatedProductsShelfProps {
   products: Product[];

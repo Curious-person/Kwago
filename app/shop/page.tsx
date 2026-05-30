@@ -1,29 +1,29 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Navbar } from '@/components/layout/Navbar';
-import { Footer } from '@/components/layout/Footer';
-import { ProductCard } from '@/components/shop/ProductCard';
-import { SmoothScroll } from '@/components/ui/SmoothScroll';
-import { ScrollReveal } from '@/components/ui/ScrollReveal';
-import { Search, Filter, ShoppingBag } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
-import { Product } from '@/types/product';
-import { Button } from '@/components/ui/Button';
-import { ProductDetailSheet } from '@/components/shop/ProductDetailSheet';
+import React, { useState } from "react";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
+import { ProductCard } from "@/components/shop/ProductCard";
+import { SmoothScroll } from "@/components/ui/SmoothScroll";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { Search, Filter, ShoppingBag } from "lucide-react";
+import { Input } from "@/components/ui/Input";
+import { Product } from "@/types/product";
+import { Button } from "@/components/ui/Button";
+import { ProductDetailSheet } from "@/components/shop/ProductDetailSheet";
 
-import { fetchProducts } from '@/lib/services/productService';
-import { fetchCategories } from '@/app/dashboard/author/categories/actions';
-import { Category } from '@/lib/types/category';
-import { MultiSelect, Option } from '@/components/ui/MultiSelect';
-
-
+import { fetchProducts } from "@/lib/services/productService";
+import { fetchCategories } from "@/app/dashboard/author/categories/actions";
+import { Category } from "@/lib/types/category";
+import { MultiSelect, Option } from "@/components/ui/MultiSelect";
 
 export default function ShopPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [availableCategories, setAvailableCategories] = useState<Category[]>(
+    [],
+  );
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -34,18 +34,18 @@ export default function ShopPage() {
       try {
         const [productsResult, categoriesResult] = await Promise.all([
           fetchProducts(),
-          fetchCategories()
+          fetchCategories(),
         ]);
 
         if (productsResult.success) {
           setProducts(productsResult.data);
         }
-        
+
         if (categoriesResult.success && categoriesResult.data) {
           setAvailableCategories(categoriesResult.data as Category[]);
         }
       } catch (error) {
-        console.error('Unexpected error loading shop data:', error);
+        console.error("Unexpected error loading shop data:", error);
       } finally {
         setIsLoading(false);
       }
@@ -54,16 +54,20 @@ export default function ShopPage() {
     loadData();
   }, []);
 
-  const categoryOptions: Option[] = availableCategories.map(cat => ({
+  const categoryOptions: Option[] = availableCategories.map((cat) => ({
     label: cat.name,
-    value: cat.id
+    value: cat.id,
   }));
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategories = selectedCategoryIds.length === 0 || 
-      (product.category_ids && product.category_ids.some(id => selectedCategoryIds.includes(id)));
-    
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesCategories =
+      selectedCategoryIds.length === 0 ||
+      (product.category_ids &&
+        product.category_ids.some((id) => selectedCategoryIds.includes(id)));
+
     return matchesSearch && matchesCategories;
   });
 
@@ -76,7 +80,7 @@ export default function ShopPage() {
     <SmoothScroll>
       <div className="min-h-screen bg-white flex flex-col">
         <Navbar />
-        
+
         <main className="flex-1 max-w-7xl mx-auto w-full px-8 py-20">
           {/* Header Section */}
           <ScrollReveal>
@@ -86,14 +90,15 @@ export default function ShopPage() {
                   Collector&apos;s Shop
                 </h1>
                 <p className="text-zinc-500 text-lg max-w-lg">
-                  Curated high-end collectibles, statues, and action figures for serious fans.
+                  Curated high-end collectibles, statues, and action figures for
+                  serious fans.
                 </p>
               </div>
-              
+
               <div className="flex flex-col md:flex-row items-center gap-4">
                 <div className="w-full md:w-64">
-                  <Input 
-                    placeholder="Search collectibles..." 
+                  <Input
+                    placeholder="Search collectibles..."
                     icon={<Search size={16} />}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -128,8 +133,8 @@ export default function ShopPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
               {filteredProducts.map((product, idx) => (
                 <ScrollReveal key={product.id} delay={idx * 50}>
-                  <ProductCard 
-                    product={product} 
+                  <ProductCard
+                    product={product}
                     onViewDetails={handleViewDetails}
                   />
                 </ScrollReveal>
@@ -138,15 +143,18 @@ export default function ShopPage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <ShoppingBag size={48} className="text-zinc-200 mb-6" />
-              <h3 className="text-xl font-bold text-zinc-900 mb-2">No collectibles found</h3>
+              <h3 className="text-xl font-bold text-zinc-900 mb-2">
+                No collectibles found
+              </h3>
               <p className="text-zinc-500 max-w-xs">
-                We couldn&apos;t find any products matching your search &quot;{searchTerm}&quot; or the selected categories.
+                We couldn&apos;t find any products matching your search &quot;
+                {searchTerm}&quot; or the selected categories.
               </p>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="mt-4 text-[#0066FF]"
                 onClick={() => {
-                  setSearchTerm('');
+                  setSearchTerm("");
                   setSelectedCategoryIds([]);
                 }}
               >
@@ -154,13 +162,14 @@ export default function ShopPage() {
               </Button>
             </div>
           )}
-          
+
           {/* Empty State / Pagination */}
           {!isLoading && filteredProducts.length > 0 && (
             <ScrollReveal delay={400}>
               <div className="flex flex-col items-center mt-32">
                 <p className="text-zinc-400 text-sm font-medium mb-10">
-                  Showing {filteredProducts.length} of {products.length} collectibles
+                  Showing {filteredProducts.length} of {products.length}{" "}
+                  collectibles
                 </p>
                 {products.length > filteredProducts.length && (
                   <Button variant="outline" className="px-12">
@@ -178,7 +187,7 @@ export default function ShopPage() {
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
         />
-        
+
         <Footer />
       </div>
     </SmoothScroll>

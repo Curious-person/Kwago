@@ -1,102 +1,98 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import { Search } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import * as React from "react";
+import { Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const Command = React.forwardRef<
-    HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-    <div
-        ref={ref}
-        className={cn(
-            'flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground',
-            className
-        )}
-        {...props}
-    />
+  <div
+    ref={ref}
+    className={cn(
+      "flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground",
+      className,
+    )}
+    {...props}
+  />
 ));
-Command.displayName = 'Command';
+Command.displayName = "Command";
 
 const CommandInput = React.forwardRef<
-    HTMLInputElement,
-    React.InputHTMLAttributes<HTMLInputElement>
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement>
 >(({ className, ...props }, ref) => (
-    <div className="flex items-center border-b px-3" cm-input-wrapper="">
-        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-        <input
-            ref={ref}
-            className={cn(
-                'flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50',
-                className
-            )}
-            {...props}
-        />
-    </div>
+  <div className="flex items-center border-b px-3" cm-input-wrapper="">
+    <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+    <input
+      ref={ref}
+      className={cn(
+        "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+        className,
+      )}
+      {...props}
+    />
+  </div>
 ));
-CommandInput.displayName = 'CommandInput';
+CommandInput.displayName = "CommandInput";
 
 const CommandList = React.forwardRef<
-    HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-    <div
-        ref={ref}
-        className={cn('max-h-[300px] overflow-y-auto overflow-x-hidden', className)}
-        {...props}
-    />
+  <div
+    ref={ref}
+    className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)}
+    {...props}
+  />
 ));
-CommandList.displayName = 'CommandList';
+CommandList.displayName = "CommandList";
 
 const CommandEmpty = React.forwardRef<
-    HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >((props, ref) => (
-    <div
-        ref={ref}
-        className="py-6 text-center text-sm"
-        {...props}
-    />
+  <div ref={ref} className="py-6 text-center text-sm" {...props} />
 ));
-CommandEmpty.displayName = 'CommandEmpty';
+CommandEmpty.displayName = "CommandEmpty";
 
 const CommandGroup = React.forwardRef<
-    HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement>
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-    <div
-        ref={ref}
-        className={cn(
-            'overflow-hidden p-1 text-foreground [&_[cm-group-heading]]:px-2 [&_[cm-group-heading]]:py-1.5 [&_[cm-group-heading]]:text-xs [&_[cm-group-heading]]:font-medium [&_[cm-group-heading]]:text-muted-foreground',
-            className
-        )}
-        {...props}
-    />
+  <div
+    ref={ref}
+    className={cn(
+      "overflow-hidden p-1 text-foreground [&_[cm-group-heading]]:px-2 [&_[cm-group-heading]]:py-1.5 [&_[cm-group-heading]]:text-xs [&_[cm-group-heading]]:font-medium [&_[cm-group-heading]]:text-muted-foreground",
+      className,
+    )}
+    {...props}
+  />
 ));
-CommandGroup.displayName = 'CommandGroup';
+CommandGroup.displayName = "CommandGroup";
 
 const CommandItem = React.forwardRef<
-    HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement> & { onSelect?: () => void }
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { onSelect?: () => void }
 >(({ className, onSelect, ...props }, ref) => (
-    <div
-        ref={ref}
-        onClick={onSelect}
-        className={cn(
-            'relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-zinc-100 transition-colors',
-            className
-        )}
-        {...props}
-    />
+  <div
+    ref={ref}
+    onClick={onSelect}
+    className={cn(
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-zinc-100 transition-colors",
+      className,
+    )}
+    {...props}
+  />
 ));
-CommandItem.displayName = 'CommandItem';
+CommandItem.displayName = "CommandItem";
 
 export {
-    Command,
-    CommandInput,
-    CommandList,
-    CommandEmpty,
-    CommandGroup,
-    CommandItem,
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
 };

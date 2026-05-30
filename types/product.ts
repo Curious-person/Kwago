@@ -1,10 +1,15 @@
-export type ProductStatus = 'pending_ai' | 'ai-approved' | 'ai-declined' | 'for-posting' | 'reject';
+export type ProductStatus =
+  | "pending_ai"
+  | "ai-approved"
+  | "ai-declined"
+  | "for-posting"
+  | "reject";
 
 export interface Product {
   id: string;
   name: string;
   price: number;
-  condition: 'New' | 'Used';
+  condition: "New" | "Used";
   image: string;
   category_ids?: string[];
   category_names?: string[];
@@ -18,7 +23,7 @@ export interface ProductRow {
   id: string;
   name: string;
   price: number;
-  condition: 'New' | 'Used';
+  condition: "New" | "Used";
   image: string;
   description: string | null;
   author_id: string;
@@ -51,7 +56,7 @@ export interface ProductRowWithCategories extends ProductRow {
 export interface CreateProductInput {
   name: string;
   price: number;
-  condition: 'New' | 'Used';
+  condition: "New" | "Used";
   image: string;
   category_ids?: string[];
   description?: string;
@@ -62,10 +67,9 @@ export interface CreateProductInput {
 export interface UpdateProductInput {
   name?: string;
   price?: number;
-  condition?: 'New' | 'Used';
+  condition?: "New" | "Used";
   image?: string;
   category_ids?: string[];
   description?: string;
   status?: string;
 }
-

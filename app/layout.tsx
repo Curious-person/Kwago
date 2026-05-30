@@ -8,15 +8,20 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-
-
 export const metadata: Metadata = {
   title: {
     default: "Kwago | Marvel & LOTR Collectibles",
     template: "%s | Kwago",
   },
-  description: "The ultimate destination for Marvel and Lord of the Rings collectors. Find premium figures, statues, and expert guides.",
-  keywords: ["Marvel Legends", "Weta Workshop", "Lord of the Rings", "Collectibles", "Action Figures"],
+  description:
+    "The ultimate destination for Marvel and Lord of the Rings collectors. Find premium figures, statues, and expert guides.",
+  keywords: [
+    "Marvel Legends",
+    "Weta Workshop",
+    "Lord of the Rings",
+    "Collectibles",
+    "Action Figures",
+  ],
   authors: [{ name: "Kwago Team" }],
   openGraph: {
     title: "Kwago | Marvel & LOTR Collectibles",

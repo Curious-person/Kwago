@@ -1,6 +1,6 @@
-import { Product } from './product';
+import { Product } from "./product";
 
-export type ProductSalesStatus = 'Active' | 'Paused' | 'Out of Stock';
+export type ProductSalesStatus = "Active" | "Paused" | "Out of Stock";
 
 export interface ProductSalesData {
   productId: string;

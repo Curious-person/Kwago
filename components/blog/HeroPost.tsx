@@ -1,7 +1,7 @@
-import React from 'react';
-import Image from 'next/image';
-import { Badge } from '../ui/Badge';
-import Link from 'next/link';
+import React from "react";
+import Image from "next/image";
+import { Badge } from "../ui/Badge";
+import Link from "next/link";
 
 interface HeroPostProps {
   title: string;
@@ -26,13 +26,11 @@ export const HeroPost: React.FC<HeroPostProps> = ({
 }) => {
   return (
     <section className="grid lg:grid-cols-2 gap-12 px-8 py-16 items-center">
-      <Link href={`/blog/${slug}`} className="relative aspect-[4/3] rounded-2xl overflow-hidden block group">
-        <Image
-          src={image}
-          alt={title}
-          fill
-          className="object-cover"
-        />
+      <Link
+        href={`/blog/${slug}`}
+        className="relative aspect-[4/3] rounded-2xl overflow-hidden block group"
+      >
+        <Image src={image} alt={title} fill className="object-cover" />
       </Link>
 
       <div className="flex flex-col items-start gap-6">
@@ -57,7 +55,9 @@ export const HeroPost: React.FC<HeroPostProps> = ({
           </div>
           <div className="text-sm">
             <p className="font-bold text-zinc-900">{author}</p>
-            <p className="text-zinc-400 font-medium">{date} • {readTime}</p>
+            <p className="text-zinc-400 font-medium">
+              {date} • {readTime}
+            </p>
           </div>
         </div>
       </div>

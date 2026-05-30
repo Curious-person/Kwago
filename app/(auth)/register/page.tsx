@@ -1,17 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
+import { useState } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/Button";
 
-type ViewState = 'form' | 'check-email';
+type ViewState = "form" | "check-email";
 
 export default function RegisterPage() {
-  const [view, setView] = useState<ViewState>('form');
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [view, setView] = useState<ViewState>("form");
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -37,10 +37,10 @@ export default function RegisterPage() {
       return;
     }
 
-    setView('check-email');
+    setView("check-email");
   }
 
-  if (view === 'check-email') {
+  if (view === "check-email") {
     return (
       <div className="w-full max-w-md text-center">
         <div className="mb-6 flex justify-center">
@@ -67,7 +67,7 @@ export default function RegisterPage() {
           Check your email
         </h1>
         <p className="mt-3 text-sm text-zinc-500 leading-relaxed">
-          We sent a confirmation link to{' '}
+          We sent a confirmation link to{" "}
           <span className="font-medium text-zinc-700">{email}</span>.
           <br />
           Click it to activate your account.
@@ -75,7 +75,7 @@ export default function RegisterPage() {
 
         <Button
           variant="outline"
-          onClick={() => window.location.href = '/login'}
+          onClick={() => (window.location.href = "/login")}
           size="lg"
           className="mt-8"
         >
@@ -193,13 +193,13 @@ export default function RegisterPage() {
           size="lg"
           className="mt-2 w-full"
         >
-          {loading ? 'Creating account…' : 'Create account'}
+          {loading ? "Creating account…" : "Create account"}
         </Button>
       </form>
 
       {/* Footer link */}
       <p className="mt-8 text-center text-sm text-zinc-500">
-        Already have an account?{' '}
+        Already have an account?{" "}
         <Link
           href="/login"
           className="font-medium text-[#0066FF] hover:underline"
