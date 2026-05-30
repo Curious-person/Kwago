@@ -2,7 +2,7 @@
 // Single source of truth for all Post-related types.
 // Import from here in every component that touches post data.
 
-export type BlockType = 'headline' | 'subtitle' | 'quote' | 'body';
+export type BlockType = "headline" | "subtitle" | "quote" | "body";
 
 export interface ContentBlock {
   id: string;
@@ -19,11 +19,11 @@ export interface ContentBlock {
  *  - Rejected      : Admin rejected with optional remarks.
  */
 export type PostStatus =
-  | 'Draft'
-  | 'admin_pending'
-  | 'ai_approved'
-  | 'Published'
-  | 'Rejected';
+  | "Draft"
+  | "admin_pending"
+  | "ai_approved"
+  | "Published"
+  | "Rejected";
 
 export interface Post {
   id: string;

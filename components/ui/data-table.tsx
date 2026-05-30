@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -8,16 +8,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/Button';
-import { ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/Button";
+import { ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 export interface ColumnDef<T> {
   header: React.ReactNode;
@@ -35,11 +35,18 @@ interface DataTableProps<T> {
   itemsPerPage?: number;
 }
 
-type SortDirection = 'asc' | 'desc' | 'newest' | null;
+type SortDirection = "asc" | "desc" | "newest" | null;
 
-export function DataTable<T>({ columns, data, itemsPerPage = 5 }: DataTableProps<T>) {
+export function DataTable<T>({
+  columns,
+  data,
+  itemsPerPage = 5,
+}: DataTableProps<T>) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState<{ colIndex: number, direction: SortDirection } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    colIndex: number;
+    direction: SortDirection;
+  } | null>(null);
 
   // 1. Sort Data
   const sortedData = useMemo(() => {
@@ -47,9 +54,9 @@ export function DataTable<T>({ columns, data, itemsPerPage = 5 }: DataTableProps
     if (sortConfig !== null && sortConfig.direction !== null) {
       sortableData.sort((a, b) => {
         const col = columns[sortConfig.colIndex];
-        let valA: any = '';
-        let valB: any = '';
-        
+        let valA: any = "";
+        let valB: any = "";
+
         if (col.filterValue) {
           valA = col.filterValue(a);
           valB = col.filterValue(b);
@@ -59,20 +66,20 @@ export function DataTable<T>({ columns, data, itemsPerPage = 5 }: DataTableProps
         }
 
         // Handle 'newest first' by attempting date parse, fallback to desc string sort
-        if (sortConfig.direction === 'newest') {
+        if (sortConfig.direction === "newest") {
           const dateA = new Date(valA).getTime();
           const dateB = new Date(valB).getTime();
           if (!isNaN(dateA) && !isNaN(dateB)) {
-              return dateB - dateA;
+            return dateB - dateA;
           }
           return valA < valB ? 1 : -1;
         }
 
         if (valA < valB) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
+          return sortConfig.direction === "asc" ? -1 : 1;
         }
         if (valA > valB) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
+          return sortConfig.direction === "asc" ? 1 : -1;
         }
         return 0;
       });
@@ -103,26 +110,51 @@ export function DataTable<T>({ columns, data, itemsPerPage = 5 }: DataTableProps
                   key={idx}
                   className={cn(
                     "py-4 px-8 text-zinc-400 font-bold uppercase tracking-widest text-[10px]",
-                    col.headerClassName
+                    col.headerClassName,
                   )}
                 >
-                  <div className={cn("flex items-center gap-2", col.headerClassName?.includes('text-right') ? 'justify-end' : '')}>
+                  <div
+                    className={cn(
+                      "flex items-center gap-2",
+                      col.headerClassName?.includes("text-right")
+                        ? "justify-end"
+                        : "",
+                    )}
+                  >
                     <span>{col.header}</span>
                     {col.filterable && (
                       <DropdownMenu>
-                        <DropdownMenuTrigger render={
-                          <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-zinc-200/50 p-0" />
-                        }>
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 rounded-full hover:bg-zinc-200/50 p-0"
+                            />
+                          }
+                        >
                           <ArrowUpDown className="h-3 w-3" />
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-40 rounded-2xl">
-                          <DropdownMenuItem onClick={() => handleSort(idx, 'asc')} className="text-xs rounded-xl cursor-pointer">
+                        <DropdownMenuContent
+                          align="start"
+                          className="w-40 rounded-2xl"
+                        >
+                          <DropdownMenuItem
+                            onClick={() => handleSort(idx, "asc")}
+                            className="text-xs rounded-xl cursor-pointer"
+                          >
                             Filter Ascending
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSort(idx, 'desc')} className="text-xs rounded-xl cursor-pointer">
+                          <DropdownMenuItem
+                            onClick={() => handleSort(idx, "desc")}
+                            className="text-xs rounded-xl cursor-pointer"
+                          >
                             Filter Descending
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSort(idx, 'newest')} className="text-xs rounded-xl cursor-pointer">
+                          <DropdownMenuItem
+                            onClick={() => handleSort(idx, "newest")}
+                            className="text-xs rounded-xl cursor-pointer"
+                          >
                             Newest First
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -145,14 +177,21 @@ export function DataTable<T>({ columns, data, itemsPerPage = 5 }: DataTableProps
                       key={colIndex}
                       className={cn("py-5 px-8", col.className)}
                     >
-                      {col.cell ? col.cell(row) : (col.accessorKey ? String(row[col.accessorKey]) : null)}
+                      {col.cell
+                        ? col.cell(row)
+                        : col.accessorKey
+                          ? String(row[col.accessorKey])
+                          : null}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="py-12 text-center text-sm text-zinc-500">
+                <TableCell
+                  colSpan={columns.length}
+                  className="py-12 text-center text-sm text-zinc-500"
+                >
                   No results found.
                 </TableCell>
               </TableRow>
@@ -173,16 +212,16 @@ export function DataTable<T>({ columns, data, itemsPerPage = 5 }: DataTableProps
                 <ChevronLeft size={20} strokeWidth={2} />
               </button>
             )}
-            
+
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
                 className={cn(
                   "flex items-center justify-center w-10 h-10 text-[15px] font-medium transition-colors",
-                  currentPage === page 
-                    ? "bg-[#0066FF] text-white rounded-2xl" 
-                    : "text-zinc-900 hover:text-zinc-600"
+                  currentPage === page
+                    ? "bg-[#0066FF] text-white rounded-2xl"
+                    : "text-zinc-900 hover:text-zinc-600",
                 )}
               >
                 {page}
@@ -191,7 +230,9 @@ export function DataTable<T>({ columns, data, itemsPerPage = 5 }: DataTableProps
 
             {currentPage < totalPages && (
               <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 className="text-zinc-900 hover:opacity-70 transition-opacity p-2 ml-1"
               >
                 <ChevronRight size={20} strokeWidth={2} />

@@ -32,13 +32,13 @@
  * - UNKNOWN_ERROR: Unexpected server error
  */
 export type ErrorCode =
-    | 'NETWORK_ERROR'
-    | 'AUTH_ERROR'
-    | 'PERMISSION_ERROR'
-    | 'VALIDATION_ERROR'
-    | 'CONSTRAINT_ERROR'
-    | 'NOT_FOUND_ERROR'
-    | 'UNKNOWN_ERROR';
+  | "NETWORK_ERROR"
+  | "AUTH_ERROR"
+  | "PERMISSION_ERROR"
+  | "VALIDATION_ERROR"
+  | "CONSTRAINT_ERROR"
+  | "NOT_FOUND_ERROR"
+  | "UNKNOWN_ERROR";
 
 /**
  * ErrorResponse interface
@@ -54,12 +54,12 @@ export type ErrorCode =
  * @property error.details - Optional debugging information (not shown to users)
  */
 export interface ErrorResponse {
-    success: false;
-    error: {
-        code: ErrorCode;
-        message: string;
-        details?: Record<string, unknown>;
-    };
+  success: false;
+  error: {
+    code: ErrorCode;
+    message: string;
+    details?: Record<string, unknown>;
+  };
 }
 
 /**
@@ -73,8 +73,8 @@ export interface ErrorResponse {
  * @property data - The actual response data of type T
  */
 export interface SuccessResponse<T> {
-    success: true;
-    data: T;
+  success: true;
+  data: T;
 }
 
 /**
@@ -98,8 +98,8 @@ export type ServiceResponse<T> = SuccessResponse<T> | ErrorResponse;
  * @property limit - Number of items per page (default: 10)
  */
 export interface PaginationParams {
-    page: number;
-    limit: number;
+  page: number;
+  limit: number;
 }
 
 /**
@@ -120,15 +120,15 @@ export interface PaginationParams {
  * @property pagination.hasPreviousPage - Whether there is a previous page available
  */
 export interface PaginatedResponse<T> {
-    data: T[];
-    pagination: {
-        page: number;
-        limit: number;
-        total: number;
-        totalPages: number;
-        hasNextPage: boolean;
-        hasPreviousPage: boolean;
-    };
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
 }
 
 /**
@@ -145,11 +145,11 @@ export interface PaginatedResponse<T> {
  * @property sortOrder - Direction to sort (ascending or descending)
  */
 export interface UserQueryFilters {
-    role?: 'member' | 'author';
-    status?: 'active' | 'suspended';
-    search?: string;
-    sortBy?: 'created_at' | 'email' | 'display_name';
-    sortOrder?: 'asc' | 'desc';
+  role?: "member" | "author";
+  status?: "active" | "suspended";
+  search?: string;
+  sortBy?: "created_at" | "email" | "display_name";
+  sortOrder?: "asc" | "desc";
 }
 
 /**
@@ -171,17 +171,16 @@ export interface UserQueryFilters {
  * @property posts_count - Number of posts created by user (optional, derived)
  */
 export interface User {
-    id: string;
-    email: string;
-    display_name: string | null;
-    avatar_url: string | null;
-    role: 'member' | 'author';
-    status: 'active' | 'suspended';
-    created_at: string;
-    updated_at?: string;
-    posts_count?: number;
+  id: string;
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  role: "member" | "author";
+  status: "active" | "suspended";
+  created_at: string;
+  updated_at?: string;
+  posts_count?: number;
 }
-
 
 /**
  * Profile interface
@@ -199,14 +198,14 @@ export interface User {
  * @property updated_at - ISO 8601 timestamp of last update
  */
 export interface Profile {
-    id: string;
-    email: string;
-    display_name: string | null;
-    avatar_url: string | null;
-    role: 'member' | 'author' | 'admin';
-    status: 'active' | 'suspended';
-    created_at: string;
-    updated_at: string;
+  id: string;
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  role: "member" | "author" | "admin";
+  status: "active" | "suspended";
+  created_at: string;
+  updated_at: string;
 }
 
 /**
@@ -254,230 +253,259 @@ export interface Profile {
  * // Returns: { success: false, error: { code: 'VALIDATION_ERROR', message: '...', details: { field: 'display_name' } } }
  */
 export function validateUser(data: unknown): ServiceResponse<User> {
-    // Check if data is an object
-    if (data === null || typeof data !== 'object' || Array.isArray(data)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User data must be an object',
-                details: { reason: 'data is not an object' },
-            },
-        };
-    }
-
-    const obj = data as Record<string, unknown>;
-
-    // Validate id field
-    if (!('id' in obj)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: missing required field "id"',
-                details: { field: 'id', reason: 'field is required' },
-            },
-        };
-    }
-
-    if (typeof obj.id !== 'string' || obj.id.trim() === '') {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: "id" must be a non-empty string',
-                details: { field: 'id', reason: 'must be a non-empty string' },
-            },
-        };
-    }
-
-    // Validate UUID format (basic check: 36 characters with hyphens in correct positions)
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(obj.id)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: "id" must be a valid UUID',
-                details: { field: 'id', reason: 'must be a valid UUID format' },
-            },
-        };
-    }
-
-    // Validate email field
-    if (!('email' in obj)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: missing required field "email"',
-                details: { field: 'email', reason: 'field is required' },
-            },
-        };
-    }
-
-    if (typeof obj.email !== 'string' || obj.email.trim() === '') {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: "email" must be a non-empty string',
-                details: { field: 'email', reason: 'must be a non-empty string' },
-            },
-        };
-    }
-
-    // Validate display_name field
-    if (!('display_name' in obj)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: missing required field "display_name"',
-                details: { field: 'display_name', reason: 'field is required' },
-            },
-        };
-    }
-
-    if (obj.display_name !== null && typeof obj.display_name !== 'string') {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: "display_name" must be a string or null',
-                details: { field: 'display_name', reason: 'must be a string or null' },
-            },
-        };
-    }
-
-    // Validate avatar_url field (optional, but if present must be string or null)
-    if ('avatar_url' in obj && obj.avatar_url !== null && typeof obj.avatar_url !== 'string') {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: "avatar_url" must be a string or null',
-                details: { field: 'avatar_url', reason: 'must be a string or null' },
-            },
-        };
-    }
-
-    // Validate role field
-    if (!('role' in obj)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: missing required field "role"',
-                details: { field: 'role', reason: 'field is required' },
-            },
-        };
-    }
-
-    const validRoles = ['member', 'author', 'admin'];
-    if (typeof obj.role !== 'string' || !validRoles.includes(obj.role)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: `User validation failed: "role" must be one of: ${validRoles.join(', ')}`,
-                details: { field: 'role', reason: `must be one of: ${validRoles.join(', ')}`, value: obj.role },
-            },
-        };
-    }
-
-    // Validate status field
-    if (!('status' in obj)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: missing required field "status"',
-                details: { field: 'status', reason: 'field is required' },
-            },
-        };
-    }
-
-    const validStatuses = ['active', 'suspended'];
-    if (typeof obj.status !== 'string' || !validStatuses.includes(obj.status)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: `User validation failed: "status" must be one of: ${validStatuses.join(', ')}`,
-                details: { field: 'status', reason: `must be one of: ${validStatuses.join(', ')}`, value: obj.status },
-            },
-        };
-    }
-
-    // Validate created_at field
-    if (!('created_at' in obj)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: missing required field "created_at"',
-                details: { field: 'created_at', reason: 'field is required' },
-            },
-        };
-    }
-
-    if (typeof obj.created_at !== 'string') {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: "created_at" must be a string',
-                details: { field: 'created_at', reason: 'must be a string' },
-            },
-        };
-    }
-
-    // Validate ISO 8601 timestamp format (supports Z, +HH:MM, -HH:MM, or no timezone)
-    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/;
-    if (!iso8601Regex.test(obj.created_at)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: "created_at" must be a valid ISO 8601 timestamp',
-                details: { field: 'created_at', reason: 'must be a valid ISO 8601 timestamp' },
-            },
-        };
-    }
-
-    // Validate that the timestamp is actually valid (not a malformed date)
-    const timestamp = new Date(obj.created_at);
-    if (isNaN(timestamp.getTime())) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'User validation failed: "created_at" is not a valid date',
-                details: { field: 'created_at', reason: 'timestamp is not a valid date' },
-            },
-        };
-    }
-
-    // All validations passed - construct and return User object
-    const user: User = {
-        id: obj.id as string,
-        email: obj.email as string,
-        display_name: obj.display_name as string | null,
-        avatar_url: ('avatar_url' in obj ? obj.avatar_url : null) as string | null,
-        role: obj.role as 'member' | 'author',
-        status: obj.status as 'active' | 'suspended',
-        created_at: obj.created_at as string,
-        updated_at: 'updated_at' in obj && typeof obj.updated_at === 'string' ? obj.updated_at : undefined,
-        posts_count: 'posts_count' in obj && typeof obj.posts_count === 'number' ? obj.posts_count : undefined,
-    };
-
+  // Check if data is an object
+  if (data === null || typeof data !== "object" || Array.isArray(data)) {
     return {
-        success: true,
-        data: user,
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: "User data must be an object",
+        details: { reason: "data is not an object" },
+      },
     };
-}
+  }
 
+  const obj = data as Record<string, unknown>;
+
+  // Validate id field
+  if (!("id" in obj)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'User validation failed: missing required field "id"',
+        details: { field: "id", reason: "field is required" },
+      },
+    };
+  }
+
+  if (typeof obj.id !== "string" || obj.id.trim() === "") {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'User validation failed: "id" must be a non-empty string',
+        details: { field: "id", reason: "must be a non-empty string" },
+      },
+    };
+  }
+
+  // Validate UUID format (basic check: 36 characters with hyphens in correct positions)
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(obj.id)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'User validation failed: "id" must be a valid UUID',
+        details: { field: "id", reason: "must be a valid UUID format" },
+      },
+    };
+  }
+
+  // Validate email field
+  if (!("email" in obj)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'User validation failed: missing required field "email"',
+        details: { field: "email", reason: "field is required" },
+      },
+    };
+  }
+
+  if (typeof obj.email !== "string" || obj.email.trim() === "") {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'User validation failed: "email" must be a non-empty string',
+        details: { field: "email", reason: "must be a non-empty string" },
+      },
+    };
+  }
+
+  // Validate display_name field
+  if (!("display_name" in obj)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message:
+          'User validation failed: missing required field "display_name"',
+        details: { field: "display_name", reason: "field is required" },
+      },
+    };
+  }
+
+  if (obj.display_name !== null && typeof obj.display_name !== "string") {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message:
+          'User validation failed: "display_name" must be a string or null',
+        details: { field: "display_name", reason: "must be a string or null" },
+      },
+    };
+  }
+
+  // Validate avatar_url field (optional, but if present must be string or null)
+  if (
+    "avatar_url" in obj &&
+    obj.avatar_url !== null &&
+    typeof obj.avatar_url !== "string"
+  ) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message:
+          'User validation failed: "avatar_url" must be a string or null',
+        details: { field: "avatar_url", reason: "must be a string or null" },
+      },
+    };
+  }
+
+  // Validate role field
+  if (!("role" in obj)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'User validation failed: missing required field "role"',
+        details: { field: "role", reason: "field is required" },
+      },
+    };
+  }
+
+  const validRoles = ["member", "author", "admin"];
+  if (typeof obj.role !== "string" || !validRoles.includes(obj.role)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: `User validation failed: "role" must be one of: ${validRoles.join(", ")}`,
+        details: {
+          field: "role",
+          reason: `must be one of: ${validRoles.join(", ")}`,
+          value: obj.role,
+        },
+      },
+    };
+  }
+
+  // Validate status field
+  if (!("status" in obj)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'User validation failed: missing required field "status"',
+        details: { field: "status", reason: "field is required" },
+      },
+    };
+  }
+
+  const validStatuses = ["active", "suspended"];
+  if (typeof obj.status !== "string" || !validStatuses.includes(obj.status)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: `User validation failed: "status" must be one of: ${validStatuses.join(", ")}`,
+        details: {
+          field: "status",
+          reason: `must be one of: ${validStatuses.join(", ")}`,
+          value: obj.status,
+        },
+      },
+    };
+  }
+
+  // Validate created_at field
+  if (!("created_at" in obj)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'User validation failed: missing required field "created_at"',
+        details: { field: "created_at", reason: "field is required" },
+      },
+    };
+  }
+
+  if (typeof obj.created_at !== "string") {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'User validation failed: "created_at" must be a string',
+        details: { field: "created_at", reason: "must be a string" },
+      },
+    };
+  }
+
+  // Validate ISO 8601 timestamp format (supports Z, +HH:MM, -HH:MM, or no timezone)
+  const iso8601Regex =
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/;
+  if (!iso8601Regex.test(obj.created_at)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message:
+          'User validation failed: "created_at" must be a valid ISO 8601 timestamp',
+        details: {
+          field: "created_at",
+          reason: "must be a valid ISO 8601 timestamp",
+        },
+      },
+    };
+  }
+
+  // Validate that the timestamp is actually valid (not a malformed date)
+  const timestamp = new Date(obj.created_at);
+  if (isNaN(timestamp.getTime())) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'User validation failed: "created_at" is not a valid date',
+        details: {
+          field: "created_at",
+          reason: "timestamp is not a valid date",
+        },
+      },
+    };
+  }
+
+  // All validations passed - construct and return User object
+  const user: User = {
+    id: obj.id as string,
+    email: obj.email as string,
+    display_name: obj.display_name as string | null,
+    avatar_url: ("avatar_url" in obj ? obj.avatar_url : null) as string | null,
+    role: obj.role as "member" | "author",
+    status: obj.status as "active" | "suspended",
+    created_at: obj.created_at as string,
+    updated_at:
+      "updated_at" in obj && typeof obj.updated_at === "string"
+        ? obj.updated_at
+        : undefined,
+    posts_count:
+      "posts_count" in obj && typeof obj.posts_count === "number"
+        ? obj.posts_count
+        : undefined,
+  };
+
+  return {
+    success: true,
+    data: user,
+  };
+}
 
 /**
  * profileToUser function
@@ -536,20 +564,23 @@ export function validateUser(data: unknown): ServiceResponse<User> {
  * // Returns: { success: true, data: { ..., avatar_url: null, ... } }
  */
 export function profileToUser(profile: Profile): ServiceResponse<User> {
-    // Transform the profile to a user object
-    const user: User = {
-        id: profile.id,
-        email: profile.email,
-        display_name: profile.display_name,
-        avatar_url: profile.avatar_url,
-        role: profile.role as 'member' | 'author',
-        status: profile.status,
-        created_at: profile.created_at,
-        updated_at: profile.updated_at,
-    };
+  // Transform the profile to a user object
+  const user: User = {
+    id: profile.id,
+    email: profile.email,
+    display_name: profile.display_name,
+    avatar_url: profile.avatar_url,
+    role:
+      profile.role === "admin"
+        ? "member"
+        : (profile.role as "member" | "author"),
+    status: profile.status,
+    created_at: profile.created_at,
+    updated_at: profile.updated_at,
+  };
 
-    // Validate the transformed user object
-    return validateUser(user);
+  // Validate the transformed user object
+  return validateUser(user);
 }
 
 /**
@@ -582,131 +613,134 @@ export function profileToUser(profile: Profile): ServiceResponse<User> {
  * // Returns: { code: 'AUTH_ERROR', message: 'Your session has expired...', details: { ... } }
  */
 export function classifySupabaseError(error: unknown): {
-    code: ErrorCode;
-    message: string;
-    details?: Record<string, unknown>;
+  code: ErrorCode;
+  message: string;
+  details?: Record<string, unknown>;
 } {
-    // Handle null or undefined errors
-    if (error === null || error === undefined) {
-        return {
-            code: 'UNKNOWN_ERROR',
-            message: 'An unexpected error occurred. Please try again later.',
-            details: { reason: 'error is null or undefined' },
-        };
-    }
-
-    // Convert error to object for inspection
-    const errorObj = error as Record<string, unknown>;
-    const errorMessage = String(errorObj.message || errorObj.toString() || '').toLowerCase();
-    const errorStatus = errorObj.status as number | undefined;
-    const errorCode = String(errorObj.code || '').toLowerCase();
-
-    // Check for network errors
-    if (
-        errorCode === 'econnrefused' ||
-        errorCode === 'etimedout' ||
-        errorCode === 'enotfound' ||
-        errorMessage.includes('connection refused') ||
-        errorMessage.includes('timeout') ||
-        errorMessage.includes('dns') ||
-        errorMessage.includes('network') ||
-        errorMessage.includes('econnrefused') ||
-        errorMessage.includes('etimedout') ||
-        errorMessage.includes('enotfound')
-    ) {
-        return {
-            code: 'NETWORK_ERROR',
-            message: 'Unable to connect to the server. Please check your internet connection and try again.',
-            details: {
-                originalMessage: errorObj.message,
-                code: errorCode,
-                status: errorStatus,
-            },
-        };
-    }
-
-    // Check for auth errors (401 status or session-related messages)
-    if (
-        errorStatus === 401 ||
-        errorMessage.includes('session') ||
-        errorMessage.includes('unauthorized') ||
-        errorMessage.includes('invalid credentials') ||
-        errorMessage.includes('token revoked') ||
-        errorMessage.includes('token expired')
-    ) {
-        return {
-            code: 'AUTH_ERROR',
-            message: 'Your session has expired. Please log in again.',
-            details: {
-                originalMessage: errorObj.message,
-                status: errorStatus,
-            },
-        };
-    }
-
-    // Check for permission errors (403 status or permission-related messages)
-    if (
-        errorStatus === 403 ||
-        errorMessage.includes('permission') ||
-        errorMessage.includes('forbidden') ||
-        errorMessage.includes('insufficient privileges') ||
-        errorMessage.includes('not authorized')
-    ) {
-        return {
-            code: 'PERMISSION_ERROR',
-            message: "You don't have permission to perform this action.",
-            details: {
-                originalMessage: errorObj.message,
-                status: errorStatus,
-            },
-        };
-    }
-
-    // Check for constraint errors
-    if (
-        errorMessage.includes('constraint') ||
-        errorMessage.includes('unique') ||
-        errorMessage.includes('foreign key') ||
-        errorMessage.includes('check constraint') ||
-        errorCode.includes('constraint')
-    ) {
-        return {
-            code: 'CONSTRAINT_ERROR',
-            message: 'This action violates a database constraint. Please try again.',
-            details: {
-                originalMessage: errorObj.message,
-                code: errorCode,
-            },
-        };
-    }
-
-    // Check for not found errors (404 status or not found messages)
-    if (
-        errorStatus === 404 ||
-        errorMessage.includes('not found') ||
-        errorMessage.includes('does not exist') ||
-        errorMessage.includes('no rows')
-    ) {
-        return {
-            code: 'NOT_FOUND_ERROR',
-            message: 'The requested resource was not found.',
-            details: {
-                originalMessage: errorObj.message,
-                status: errorStatus,
-            },
-        };
-    }
-
-    // Default to unknown error
+  // Handle null or undefined errors
+  if (error === null || error === undefined) {
     return {
-        code: 'UNKNOWN_ERROR',
-        message: 'An unexpected error occurred. Please try again later.',
-        details: {
-            originalMessage: errorObj.message,
-            code: errorCode,
-            status: errorStatus,
-        },
+      code: "UNKNOWN_ERROR",
+      message: "An unexpected error occurred. Please try again later.",
+      details: { reason: "error is null or undefined" },
     };
+  }
+
+  // Convert error to object for inspection
+  const errorObj = error as Record<string, unknown>;
+  const errorMessage = String(
+    errorObj.message || errorObj.toString() || "",
+  ).toLowerCase();
+  const errorStatus = errorObj.status as number | undefined;
+  const errorCode = String(errorObj.code || "").toLowerCase();
+
+  // Check for network errors
+  if (
+    errorCode === "econnrefused" ||
+    errorCode === "etimedout" ||
+    errorCode === "enotfound" ||
+    errorMessage.includes("connection refused") ||
+    errorMessage.includes("timeout") ||
+    errorMessage.includes("dns") ||
+    errorMessage.includes("network") ||
+    errorMessage.includes("econnrefused") ||
+    errorMessage.includes("etimedout") ||
+    errorMessage.includes("enotfound")
+  ) {
+    return {
+      code: "NETWORK_ERROR",
+      message:
+        "Unable to connect to the server. Please check your internet connection and try again.",
+      details: {
+        originalMessage: errorObj.message,
+        code: errorCode,
+        status: errorStatus,
+      },
+    };
+  }
+
+  // Check for auth errors (401 status or session-related messages)
+  if (
+    errorStatus === 401 ||
+    errorMessage.includes("session") ||
+    errorMessage.includes("unauthorized") ||
+    errorMessage.includes("invalid credentials") ||
+    errorMessage.includes("token revoked") ||
+    errorMessage.includes("token expired")
+  ) {
+    return {
+      code: "AUTH_ERROR",
+      message: "Your session has expired. Please log in again.",
+      details: {
+        originalMessage: errorObj.message,
+        status: errorStatus,
+      },
+    };
+  }
+
+  // Check for permission errors (403 status or permission-related messages)
+  if (
+    errorStatus === 403 ||
+    errorMessage.includes("permission") ||
+    errorMessage.includes("forbidden") ||
+    errorMessage.includes("insufficient privileges") ||
+    errorMessage.includes("not authorized")
+  ) {
+    return {
+      code: "PERMISSION_ERROR",
+      message: "You don't have permission to perform this action.",
+      details: {
+        originalMessage: errorObj.message,
+        status: errorStatus,
+      },
+    };
+  }
+
+  // Check for constraint errors
+  if (
+    errorMessage.includes("constraint") ||
+    errorMessage.includes("unique") ||
+    errorMessage.includes("foreign key") ||
+    errorMessage.includes("check constraint") ||
+    errorCode.includes("constraint")
+  ) {
+    return {
+      code: "CONSTRAINT_ERROR",
+      message: "This action violates a database constraint. Please try again.",
+      details: {
+        originalMessage: errorObj.message,
+        code: errorCode,
+      },
+    };
+  }
+
+  // Check for not found errors (404 status or not found messages)
+  if (
+    errorStatus === 404 ||
+    errorMessage.includes("not found") ||
+    errorMessage.includes("does not exist") ||
+    errorMessage.includes("no rows")
+  ) {
+    return {
+      code: "NOT_FOUND_ERROR",
+      message: "The requested resource was not found.",
+      details: {
+        originalMessage: errorObj.message,
+        status: errorStatus,
+      },
+    };
+  }
+
+  // Default to unknown error
+  return {
+    code: "UNKNOWN_ERROR",
+    message: "An unexpected error occurred. Please try again later.",
+    details: {
+      originalMessage: errorObj.message,
+      code: errorCode,
+      status: errorStatus,
+    },
+  };
 }
 
 /**
@@ -738,18 +772,18 @@ export function classifySupabaseError(error: unknown): {
  * // Returns: { success: false, error: { code: 'PERMISSION_ERROR', message: '...', details: undefined } }
  */
 export function createErrorResponse(
-    code: ErrorCode,
-    message: string,
-    details?: Record<string, unknown>
+  code: ErrorCode,
+  message: string,
+  details?: Record<string, unknown>,
 ): ErrorResponse {
-    return {
-        success: false,
-        error: {
-            code,
-            message,
-            details,
-        },
-    };
+  return {
+    success: false,
+    error: {
+      code,
+      message,
+      details,
+    },
+  };
 }
 
 /**
@@ -778,10 +812,10 @@ export function createErrorResponse(
  * // Returns: { success: true, data: { data: [...], pagination: { ... } } }
  */
 export function createSuccessResponse<T>(data: T): SuccessResponse<T> {
-    return {
-        success: true,
-        data,
-    };
+  return {
+    success: true,
+    data,
+  };
 }
 
 /**
@@ -800,13 +834,13 @@ export function createSuccessResponse<T>(data: T): SuccessResponse<T> {
  * @property offset - Offset for database query (calculated as (page - 1) * limit)
  */
 export interface PaginationMetadata {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-    offset: number;
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  offset: number;
 }
 
 /**
@@ -884,40 +918,46 @@ export interface PaginationMetadata {
  * // Throws: Error: Pagination validation failed: limit must be > 0, got -5
  */
 export function calculatePaginationMetadata(
-    page: number,
-    limit: number,
-    total: number
+  page: number,
+  limit: number,
+  total: number,
 ): PaginationMetadata {
-    // Validate page parameter
-    if (page < 1) {
-        throw new Error(`Pagination validation failed: page must be >= 1, got ${page}`);
-    }
+  // Validate page parameter
+  if (page < 1) {
+    throw new Error(
+      `Pagination validation failed: page must be >= 1, got ${page}`,
+    );
+  }
 
-    // Validate limit parameter
-    if (limit <= 0) {
-        throw new Error(`Pagination validation failed: limit must be > 0, got ${limit}`);
-    }
+  // Validate limit parameter
+  if (limit <= 0) {
+    throw new Error(
+      `Pagination validation failed: limit must be > 0, got ${limit}`,
+    );
+  }
 
-    // Validate total parameter
-    if (total < 0) {
-        throw new Error(`Pagination validation failed: total must be >= 0, got ${total}`);
-    }
+  // Validate total parameter
+  if (total < 0) {
+    throw new Error(
+      `Pagination validation failed: total must be >= 0, got ${total}`,
+    );
+  }
 
-    // Calculate pagination metadata
-    const totalPages = Math.ceil(total / limit);
-    const hasNextPage = (page * limit) < total;
-    const hasPreviousPage = page > 1;
-    const offset = (page - 1) * limit;
+  // Calculate pagination metadata
+  const totalPages = Math.ceil(total / limit);
+  const hasNextPage = page * limit < total;
+  const hasPreviousPage = page > 1;
+  const offset = (page - 1) * limit;
 
-    return {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNextPage,
-        hasPreviousPage,
-        offset,
-    };
+  return {
+    page,
+    limit,
+    total,
+    totalPages,
+    hasNextPage,
+    hasPreviousPage,
+    offset,
+  };
 }
 
 /**
@@ -973,82 +1013,90 @@ export function calculatePaginationMetadata(
  * // Returns: { success: false, error: { code: 'VALIDATION_ERROR', message: '...', details: { field: 'limit', reason: '...' } } }
  */
 export function validatePaginationParams(
-    page: number,
-    limit: number
+  page: number,
+  limit: number,
 ): ServiceResponse<{ page: number; limit: number }> {
-    // Validate page parameter
-    if (typeof page !== 'number' || isNaN(page) || !isFinite(page)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'Pagination validation failed: "page" must be a valid number',
-                details: { field: 'page', reason: 'must be a valid number', value: page },
-            },
-        };
-    }
-
-    if (!Number.isInteger(page)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'Pagination validation failed: "page" must be an integer',
-                details: { field: 'page', reason: 'must be an integer', value: page },
-            },
-        };
-    }
-
-    if (page < 1) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'Pagination validation failed: "page" must be >= 1',
-                details: { field: 'page', reason: 'must be >= 1', value: page },
-            },
-        };
-    }
-
-    // Validate limit parameter
-    if (typeof limit !== 'number' || isNaN(limit) || !isFinite(limit)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'Pagination validation failed: "limit" must be a valid number',
-                details: { field: 'limit', reason: 'must be a valid number', value: limit },
-            },
-        };
-    }
-
-    if (!Number.isInteger(limit)) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'Pagination validation failed: "limit" must be an integer',
-                details: { field: 'limit', reason: 'must be an integer', value: limit },
-            },
-        };
-    }
-
-    if (limit <= 0) {
-        return {
-            success: false,
-            error: {
-                code: 'VALIDATION_ERROR',
-                message: 'Pagination validation failed: "limit" must be > 0',
-                details: { field: 'limit', reason: 'must be > 0', value: limit },
-            },
-        };
-    }
-
-    // All validations passed
+  // Validate page parameter
+  if (typeof page !== "number" || isNaN(page) || !isFinite(page)) {
     return {
-        success: true,
-        data: { page, limit },
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'Pagination validation failed: "page" must be a valid number',
+        details: {
+          field: "page",
+          reason: "must be a valid number",
+          value: page,
+        },
+      },
     };
+  }
+
+  if (!Number.isInteger(page)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'Pagination validation failed: "page" must be an integer',
+        details: { field: "page", reason: "must be an integer", value: page },
+      },
+    };
+  }
+
+  if (page < 1) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'Pagination validation failed: "page" must be >= 1',
+        details: { field: "page", reason: "must be >= 1", value: page },
+      },
+    };
+  }
+
+  // Validate limit parameter
+  if (typeof limit !== "number" || isNaN(limit) || !isFinite(limit)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'Pagination validation failed: "limit" must be a valid number',
+        details: {
+          field: "limit",
+          reason: "must be a valid number",
+          value: limit,
+        },
+      },
+    };
+  }
+
+  if (!Number.isInteger(limit)) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'Pagination validation failed: "limit" must be an integer',
+        details: { field: "limit", reason: "must be an integer", value: limit },
+      },
+    };
+  }
+
+  if (limit <= 0) {
+    return {
+      success: false,
+      error: {
+        code: "VALIDATION_ERROR",
+        message: 'Pagination validation failed: "limit" must be > 0',
+        details: { field: "limit", reason: "must be > 0", value: limit },
+      },
+    };
+  }
+
+  // All validations passed
+  return {
+    success: true,
+    data: { page, limit },
+  };
 }
 
 /**
@@ -1092,127 +1140,149 @@ export function validatePaginationParams(
  * // Returns: { success: true, data: { data: [...], pagination: { ... } } }
  */
 export async function getUsers(
-    filters?: UserQueryFilters,
-    pagination?: PaginationParams
+  filters?: UserQueryFilters,
+  pagination?: PaginationParams,
 ): Promise<ServiceResponse<PaginatedResponse<User>>> {
-    try {
-        console.log('[getUsers] Starting with filters:', filters, 'pagination:', pagination);
+  try {
+    console.log(
+      "[getUsers] Starting with filters:",
+      filters,
+      "pagination:",
+      pagination,
+    );
 
-        const { createServerSupabaseClient } = await import('@/lib/supabase/server');
-        const supabase = await createServerSupabaseClient();
-        console.log('[getUsers] Supabase client created');
+    const { createServerSupabaseClient } =
+      await import("@/lib/supabase/server");
+    const supabase = await createServerSupabaseClient();
+    console.log("[getUsers] Supabase client created");
 
-        // Set default pagination
-        const page = pagination?.page ?? 1;
-        const limit = pagination?.limit ?? 10;
+    // Set default pagination
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 10;
 
-        // Validate pagination parameters
-        const paginationValidation = validatePaginationParams(page, limit);
-        if (!paginationValidation.success) {
-            console.log('[getUsers] Pagination validation failed');
-            return paginationValidation as ServiceResponse<PaginatedResponse<User>>;
-        }
-
-        // Calculate offset
-        const offset = (page - 1) * limit;
-
-        // Build the query
-        let query = supabase.from('profiles').select('*', { count: 'exact' });
-        console.log('[getUsers] Query initialized');
-
-        // Exclude admin users from the results
-        query = query.neq('role', 'admin');
-        console.log('[getUsers] Excluded admin users');
-
-        // Apply role filter
-        if (filters?.role) {
-            query = query.eq('role', filters.role);
-            console.log('[getUsers] Applied role filter:', filters.role);
-        }
-
-        // Apply status filter
-        if (filters?.status) {
-            query = query.eq('status', filters.status);
-            console.log('[getUsers] Applied status filter:', filters.status);
-        }
-
-        // Apply search filter (case-insensitive substring match on display_name or email)
-        if (filters?.search) {
-            const searchTerm = filters.search.trim();
-            if (searchTerm) {
-                query = query.or(
-                    `display_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`
-                );
-                console.log('[getUsers] Applied search filter:', searchTerm);
-            }
-        }
-
-        // Apply sorting
-        const sortOrder = filters?.sortOrder ?? 'desc';
-        const sortBy = filters?.sortBy ?? 'created_at';
-        query = query.order(sortBy, { ascending: sortOrder === 'asc' });
-        console.log('[getUsers] Applied sorting:', sortBy, sortOrder);
-
-        // Apply pagination
-        query = query.range(offset, offset + limit - 1);
-        console.log('[getUsers] Applied pagination range:', offset, offset + limit - 1);
-
-        // Execute the query
-        console.log('[getUsers] Executing query...');
-        const { data, error, count } = await query;
-        console.log('[getUsers] Query executed. Data:', data, 'Error:', error, 'Count:', count);
-
-        if (error) {
-            console.error('[getUsers] Supabase error:', error);
-            const classification = classifySupabaseError(error);
-            return createErrorResponse(
-                classification.code,
-                classification.message,
-                classification.details
-            );
-        }
-
-        // Transform profiles to users
-        const users: User[] = [];
-        if (data && Array.isArray(data)) {
-            console.log('[getUsers] Processing', data.length, 'profiles');
-            for (const profile of data) {
-                console.log('[getUsers] Transforming profile:', profile);
-                const userResult = profileToUser(profile as Profile);
-                console.log('[getUsers] Transform result:', userResult);
-                if (userResult.success) {
-                    users.push(userResult.data);
-                } else {
-                    console.error('[getUsers] Validation failed for profile:', profile, 'Error:', userResult.error);
-                }
-            }
-        }
-        console.log('[getUsers] Final users array:', users);
-
-        // Calculate pagination metadata
-        const total = count ?? 0;
-        const paginationMetadata = calculatePaginationMetadata(page, limit, total);
-
-        // Return paginated response
-        return createSuccessResponse<PaginatedResponse<User>>({
-            data: users,
-            pagination: {
-                page: paginationMetadata.page,
-                limit: paginationMetadata.limit,
-                total: paginationMetadata.total,
-                totalPages: paginationMetadata.totalPages,
-                hasNextPage: paginationMetadata.hasNextPage,
-                hasPreviousPage: paginationMetadata.hasPreviousPage,
-            },
-        });
-    } catch (error) {
-        const classification = classifySupabaseError(error);
-        return createErrorResponse(
-            classification.code,
-            classification.message,
-            classification.details
-        );
+    // Validate pagination parameters
+    const paginationValidation = validatePaginationParams(page, limit);
+    if (!paginationValidation.success) {
+      console.log("[getUsers] Pagination validation failed");
+      return paginationValidation as ServiceResponse<PaginatedResponse<User>>;
     }
+
+    // Calculate offset
+    const offset = (page - 1) * limit;
+
+    // Build the query
+    let query = supabase.from("profiles").select("*", { count: "exact" });
+    console.log("[getUsers] Query initialized");
+
+    // Exclude admin users from the results
+    query = query.neq("role", "admin");
+    console.log("[getUsers] Excluded admin users");
+
+    // Apply role filter
+    if (filters?.role) {
+      query = query.eq("role", filters.role);
+      console.log("[getUsers] Applied role filter:", filters.role);
+    }
+
+    // Apply status filter
+    if (filters?.status) {
+      query = query.eq("status", filters.status);
+      console.log("[getUsers] Applied status filter:", filters.status);
+    }
+
+    // Apply search filter (case-insensitive substring match on display_name or email)
+    if (filters?.search) {
+      const searchTerm = filters.search.trim();
+      if (searchTerm) {
+        query = query.or(
+          `display_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`,
+        );
+        console.log("[getUsers] Applied search filter:", searchTerm);
+      }
+    }
+
+    // Apply sorting
+    const sortOrder = filters?.sortOrder ?? "desc";
+    const sortBy = filters?.sortBy ?? "created_at";
+    query = query.order(sortBy, { ascending: sortOrder === "asc" });
+    console.log("[getUsers] Applied sorting:", sortBy, sortOrder);
+
+    // Apply pagination
+    query = query.range(offset, offset + limit - 1);
+    console.log(
+      "[getUsers] Applied pagination range:",
+      offset,
+      offset + limit - 1,
+    );
+
+    // Execute the query
+    console.log("[getUsers] Executing query...");
+    const { data, error, count } = await query;
+    console.log(
+      "[getUsers] Query executed. Data:",
+      data,
+      "Error:",
+      error,
+      "Count:",
+      count,
+    );
+
+    if (error) {
+      console.error("[getUsers] Supabase error:", error);
+      const classification = classifySupabaseError(error);
+      return createErrorResponse(
+        classification.code,
+        classification.message,
+        classification.details,
+      );
+    }
+
+    // Transform profiles to users
+    const users: User[] = [];
+    if (data && Array.isArray(data)) {
+      console.log("[getUsers] Processing", data.length, "profiles");
+      for (const profile of data) {
+        console.log("[getUsers] Transforming profile:", profile);
+        const userResult = profileToUser(profile as Profile);
+        console.log("[getUsers] Transform result:", userResult);
+        if (userResult.success) {
+          users.push(userResult.data);
+        } else {
+          console.error(
+            "[getUsers] Validation failed for profile:",
+            profile,
+            "Error:",
+            userResult.error,
+          );
+        }
+      }
+    }
+    console.log("[getUsers] Final users array:", users);
+
+    // Calculate pagination metadata
+    const total = count ?? 0;
+    const paginationMetadata = calculatePaginationMetadata(page, limit, total);
+
+    // Return paginated response
+    return createSuccessResponse<PaginatedResponse<User>>({
+      data: users,
+      pagination: {
+        page: paginationMetadata.page,
+        limit: paginationMetadata.limit,
+        total: paginationMetadata.total,
+        totalPages: paginationMetadata.totalPages,
+        hasNextPage: paginationMetadata.hasNextPage,
+        hasPreviousPage: paginationMetadata.hasPreviousPage,
+      },
+    });
+  } catch (error) {
+    const classification = classifySupabaseError(error);
+    return createErrorResponse(
+      classification.code,
+      classification.message,
+      classification.details,
+    );
+  }
 }
 
 /**
@@ -1236,69 +1306,72 @@ export async function getUsers(
  * // Returns: { success: true, data: { id: '...', role: 'member', ... } }
  */
 export async function updateUserRole(
-    userId: string,
-    newRole: 'member' | 'author'
+  userId: string,
+  newRole: "member" | "author",
 ): Promise<ServiceResponse<User>> {
-    try {
-        // Validate userId
-        if (!userId || typeof userId !== 'string' || userId.trim() === '') {
-            return createErrorResponse(
-                'VALIDATION_ERROR',
-                'User ID must be a non-empty string',
-                { field: 'userId', reason: 'must be a non-empty string' }
-            );
-        }
-
-        // Validate newRole
-        if (newRole !== 'member' && newRole !== 'author') {
-            return createErrorResponse(
-                'VALIDATION_ERROR',
-                'Role must be either "member" or "author"',
-                { field: 'newRole', reason: 'must be "member" or "author"', value: newRole }
-            );
-        }
-
-        const { createServerSupabaseClient } = await import('@/lib/supabase/server');
-        const supabase = await createServerSupabaseClient();
-
-        // Update the user's role
-        const { data, error } = await supabase
-            .from('profiles')
-            .update({
-                role: newRole,
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', userId)
-            .select('*')
-            .single();
-
-        if (error) {
-            const classification = classifySupabaseError(error);
-            return createErrorResponse(
-                classification.code,
-                classification.message,
-                classification.details
-            );
-        }
-
-        if (!data) {
-            return createErrorResponse(
-                'NOT_FOUND_ERROR',
-                'User not found',
-                { userId }
-            );
-        }
-
-        // Transform and return the updated user
-        return profileToUser(data as Profile);
-    } catch (error) {
-        const classification = classifySupabaseError(error);
-        return createErrorResponse(
-            classification.code,
-            classification.message,
-            classification.details
-        );
+  try {
+    // Validate userId
+    if (!userId || typeof userId !== "string" || userId.trim() === "") {
+      return createErrorResponse(
+        "VALIDATION_ERROR",
+        "User ID must be a non-empty string",
+        { field: "userId", reason: "must be a non-empty string" },
+      );
     }
+
+    // Validate newRole
+    if (newRole !== "member" && newRole !== "author") {
+      return createErrorResponse(
+        "VALIDATION_ERROR",
+        'Role must be either "member" or "author"',
+        {
+          field: "newRole",
+          reason: 'must be "member" or "author"',
+          value: newRole,
+        },
+      );
+    }
+
+    const { createServerSupabaseClient } =
+      await import("@/lib/supabase/server");
+    const supabase = await createServerSupabaseClient();
+
+    // Update the user's role
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({
+        role: newRole,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", userId)
+      .select("*")
+      .single();
+
+    if (error) {
+      const classification = classifySupabaseError(error);
+      return createErrorResponse(
+        classification.code,
+        classification.message,
+        classification.details,
+      );
+    }
+
+    if (!data) {
+      return createErrorResponse("NOT_FOUND_ERROR", "User not found", {
+        userId,
+      });
+    }
+
+    // Transform and return the updated user
+    return profileToUser(data as Profile);
+  } catch (error) {
+    const classification = classifySupabaseError(error);
+    return createErrorResponse(
+      classification.code,
+      classification.message,
+      classification.details,
+    );
+  }
 }
 
 /**
@@ -1322,68 +1395,70 @@ export async function updateUserRole(
  * // Returns: { success: true, data: { id: '...', status: 'active', ... } }
  */
 export async function updateUserStatus(
-    userId: string,
-    newStatus: 'active' | 'suspended'
+  userId: string,
+  newStatus: "active" | "suspended",
 ): Promise<ServiceResponse<User>> {
-    try {
-        // Validate userId
-        if (!userId || typeof userId !== 'string' || userId.trim() === '') {
-            return createErrorResponse(
-                'VALIDATION_ERROR',
-                'User ID must be a non-empty string',
-                { field: 'userId', reason: 'must be a non-empty string' }
-            );
-        }
-
-        // Validate newStatus
-        if (newStatus !== 'active' && newStatus !== 'suspended') {
-            return createErrorResponse(
-                'VALIDATION_ERROR',
-                'Status must be either "active" or "suspended"',
-                { field: 'newStatus', reason: 'must be "active" or "suspended"', value: newStatus }
-            );
-        }
-
-        const { createServerSupabaseClient } = await import('@/lib/supabase/server');
-        const supabase = await createServerSupabaseClient();
-
-        // Update the user's status
-        const { data, error } = await supabase
-            .from('profiles')
-            .update({
-                status: newStatus,
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', userId)
-            .select('*')
-            .single();
-
-        if (error) {
-            const classification = classifySupabaseError(error);
-            return createErrorResponse(
-                classification.code,
-                classification.message,
-                classification.details
-            );
-        }
-
-        if (!data) {
-            return createErrorResponse(
-                'NOT_FOUND_ERROR',
-                'User not found',
-                { userId }
-            );
-        }
-
-        // Transform and return the updated user
-        return profileToUser(data as Profile);
-    } catch (error) {
-        const classification = classifySupabaseError(error);
-        return createErrorResponse(
-            classification.code,
-            classification.message,
-            classification.details
-        );
+  try {
+    // Validate userId
+    if (!userId || typeof userId !== "string" || userId.trim() === "") {
+      return createErrorResponse(
+        "VALIDATION_ERROR",
+        "User ID must be a non-empty string",
+        { field: "userId", reason: "must be a non-empty string" },
+      );
     }
-}
 
+    // Validate newStatus
+    if (newStatus !== "active" && newStatus !== "suspended") {
+      return createErrorResponse(
+        "VALIDATION_ERROR",
+        'Status must be either "active" or "suspended"',
+        {
+          field: "newStatus",
+          reason: 'must be "active" or "suspended"',
+          value: newStatus,
+        },
+      );
+    }
+
+    const { createServerSupabaseClient } =
+      await import("@/lib/supabase/server");
+    const supabase = await createServerSupabaseClient();
+
+    // Update the user's status
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({
+        status: newStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", userId)
+      .select("*")
+      .single();
+
+    if (error) {
+      const classification = classifySupabaseError(error);
+      return createErrorResponse(
+        classification.code,
+        classification.message,
+        classification.details,
+      );
+    }
+
+    if (!data) {
+      return createErrorResponse("NOT_FOUND_ERROR", "User not found", {
+        userId,
+      });
+    }
+
+    // Transform and return the updated user
+    return profileToUser(data as Profile);
+  } catch (error) {
+    const classification = classifySupabaseError(error);
+    return createErrorResponse(
+      classification.code,
+      classification.message,
+      classification.details,
+    );
+  }
+}

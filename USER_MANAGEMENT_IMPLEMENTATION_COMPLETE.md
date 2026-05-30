@@ -9,6 +9,7 @@ A complete, production-ready User Management system for the Kwago platform, enab
 ## Architecture
 
 ### Tech Stack
+
 - **Frontend:** React 18 + TypeScript + Next.js 15
 - **Backend:** Next.js Server Actions + Supabase
 - **Database:** PostgreSQL (Supabase)
@@ -49,6 +50,7 @@ A complete, production-ready User Management system for the Kwago platform, enab
 ## Features Implemented
 
 ### 1. User Listing & Filtering ✅
+
 - **View all users** with pagination
 - **Filter by role** (Members / Authors)
 - **Search by name or email** (case-insensitive)
@@ -56,24 +58,28 @@ A complete, production-ready User Management system for the Kwago platform, enab
 - **Real-time user counts** on tabs
 
 ### 2. User Role Management ✅
+
 - **Promote members to authors** - Grant publishing privileges
 - **Demote authors to members** - Revoke publishing privileges
 - **Confirmation dialogs** with user details
 - **Atomic updates** with error handling
 
 ### 3. Account Status Management ✅
+
 - **Suspend active accounts** - Prevent login and platform access
 - **Reactivate suspended accounts** - Restore full access
 - **Status badges** showing current state
 - **Confirmation dialogs** with clear consequences
 
 ### 4. Authorization & Security ✅
+
 - **Admin-only access** - Non-admins redirected to /unauthorized
 - **Server-side authorization checks** on all actions
 - **RLS policies** on database (profiles table)
 - **Secure server actions** with proper error handling
 
 ### 5. User Experience ✅
+
 - **Responsive design** - Works on desktop, tablet, mobile
 - **Loading states** - Visual feedback during operations
 - **Error handling** - User-friendly error messages
@@ -82,6 +88,7 @@ A complete, production-ready User Management system for the Kwago platform, enab
 - **Search & filter** - Quick user discovery
 
 ### 6. Performance Optimization ✅
+
 - **Database indexes** - 5-100x faster queries
 - **Component memoization** - 60-80% fewer re-renders
 - **Efficient filtering** - Client-side after fetch
@@ -92,6 +99,7 @@ A complete, production-ready User Management system for the Kwago platform, enab
 ## Database Schema
 
 ### Profiles Table
+
 ```sql
 CREATE TABLE public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id),
@@ -106,6 +114,7 @@ CREATE TABLE public.profiles (
 ```
 
 ### Indexes
+
 - `idx_profiles_role` - Role filtering
 - `idx_profiles_status` - Status filtering
 - `idx_profiles_created_at_desc` - Sorting
@@ -156,50 +165,61 @@ components/ui/
 ### Server Actions
 
 #### `getUsersAction(filters?, pagination?)`
+
 Fetches paginated list of users with optional filtering.
 
 **Parameters:**
+
 - `filters?: UserQueryFilters` - role, status, search, sortBy, sortOrder
 - `pagination?: PaginationParams` - page, limit
 
 **Returns:** `ServiceResponse<PaginatedResponse<User>>`
 
 **Example:**
+
 ```typescript
 const result = await getUsersAction(
-  { role: 'member', search: 'john' },
-  { page: 1, limit: 10 }
+  { role: "member", search: "john" },
+  { page: 1, limit: 10 },
 );
 ```
 
 #### `promoteUserAction(userId)`
+
 Promotes a member to author role.
 
 **Parameters:**
+
 - `userId: string` - User ID to promote
 
 **Returns:** `ServiceResponse<User>`
 
 #### `demoteUserAction(userId)`
+
 Demotes an author to member role.
 
 **Parameters:**
+
 - `userId: string` - User ID to demote
 
 **Returns:** `ServiceResponse<User>`
 
 #### `suspendUserAction(userId)`
+
 Suspends an active user account.
 
 **Parameters:**
+
 - `userId: string` - User ID to suspend
 
 **Returns:** `ServiceResponse<User>`
 
 #### `reactivateUserAction(userId)`
+
 Reactivates a suspended user account.
 
 **Parameters:**
+
 - `userId: string` - User ID to reactivate
 
 **Returns:** `ServiceResponse<User>`
@@ -209,6 +229,7 @@ Reactivates a suspended user account.
 ## Error Handling
 
 ### Error Codes
+
 - `NETWORK_ERROR` - Network connectivity issues
 - `AUTH_ERROR` - Authentication failures
 - `PERMISSION_ERROR` - Authorization failures
@@ -218,6 +239,7 @@ Reactivates a suspended user account.
 - `UNKNOWN_ERROR` - Unexpected errors
 
 ### Error Response Format
+
 ```typescript
 {
   success: false,
@@ -234,18 +256,21 @@ Reactivates a suspended user account.
 ## Testing
 
 ### Unit Tests ✅
+
 - User validation
 - Profile transformation
 - Error classification
 - Pagination logic
 
 ### Integration Tests ✅
+
 - Database operations
 - Role updates
 - Status updates
 - Authorization checks
 
 ### Property-Based Tests ✅
+
 - User data validation
 - Profile transformation
 - Role filtering
@@ -258,13 +283,13 @@ Reactivates a suspended user account.
 
 ## Performance Metrics
 
-| Operation | Time | Notes |
-|-----------|------|-------|
-| Fetch users (10 items) | ~50ms | With indexes |
-| Search users | ~30ms | Trigram index |
-| Promote user | ~100ms | Update + validation |
-| Suspend user | ~100ms | Update + validation |
-| Component render | ~16ms | 60 FPS target |
+| Operation              | Time   | Notes               |
+| ---------------------- | ------ | ------------------- |
+| Fetch users (10 items) | ~50ms  | With indexes        |
+| Search users           | ~30ms  | Trigram index       |
+| Promote user           | ~100ms | Update + validation |
+| Suspend user           | ~100ms | Update + validation |
+| Component render       | ~16ms  | 60 FPS target       |
 
 ---
 
@@ -336,18 +361,21 @@ Reactivates a suspended user account.
 ## Troubleshooting
 
 ### Users not displaying
+
 1. Check RLS policies on profiles table
 2. Verify admin role is set correctly
 3. Check database indexes are created
 4. Review server logs for errors
 
 ### Slow queries
+
 1. Verify database indexes exist
 2. Check query execution plans
 3. Monitor database load
 4. Consider pagination adjustments
 
 ### Authorization errors
+
 1. Verify user has admin role
 2. Check RLS policies
 3. Review server action logs
@@ -367,6 +395,7 @@ Reactivates a suspended user account.
 ## Summary
 
 The User Management CRUD system is **production-ready** with:
+
 - ✅ Complete feature set
 - ✅ Comprehensive error handling
 - ✅ Optimized performance

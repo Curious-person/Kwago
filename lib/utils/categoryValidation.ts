@@ -3,15 +3,19 @@
  * Provides validation functions for category form data
  */
 
-import { CategoryFormData, ValidationResult, ValidationError } from '@/lib/types/category';
+import {
+  CategoryFormData,
+  ValidationResult,
+  ValidationError,
+} from "@/lib/types/category";
 
 /**
  * Validation constants
  */
 export const CATEGORY_VALIDATION = {
-    NAME_MIN_LENGTH: 1,
-    NAME_MAX_LENGTH: 100,
-    DESCRIPTION_MAX_LENGTH: 500
+  NAME_MIN_LENGTH: 1,
+  NAME_MAX_LENGTH: 100,
+  DESCRIPTION_MAX_LENGTH: 500,
 };
 
 /**
@@ -20,15 +24,15 @@ export const CATEGORY_VALIDATION = {
  * @returns Validation error message or null if valid
  */
 export function validateCategoryName(name: string): string | null {
-    if (!name || name.trim().length === 0) {
-        return 'Category name is required';
-    }
+  if (!name || name.trim().length === 0) {
+    return "Category name is required";
+  }
 
-    if (name.length > CATEGORY_VALIDATION.NAME_MAX_LENGTH) {
-        return `Category name must be ${CATEGORY_VALIDATION.NAME_MAX_LENGTH} characters or less`;
-    }
+  if (name.length > CATEGORY_VALIDATION.NAME_MAX_LENGTH) {
+    return `Category name must be ${CATEGORY_VALIDATION.NAME_MAX_LENGTH} characters or less`;
+  }
 
-    return null;
+  return null;
 }
 
 /**
@@ -36,16 +40,18 @@ export function validateCategoryName(name: string): string | null {
  * @param description - The category description to validate
  * @returns Validation error message or null if valid
  */
-export function validateCategoryDescription(description: string | undefined): string | null {
-    if (!description) {
-        return null; // Description is optional
-    }
+export function validateCategoryDescription(
+  description: string | undefined,
+): string | null {
+  if (!description) {
+    return null; // Description is optional
+  }
 
-    if (description.length > CATEGORY_VALIDATION.DESCRIPTION_MAX_LENGTH) {
-        return `Description must be ${CATEGORY_VALIDATION.DESCRIPTION_MAX_LENGTH} characters or less`;
-    }
+  if (description.length > CATEGORY_VALIDATION.DESCRIPTION_MAX_LENGTH) {
+    return `Description must be ${CATEGORY_VALIDATION.DESCRIPTION_MAX_LENGTH} characters or less`;
+  }
 
-    return null;
+  return null;
 }
 
 /**
@@ -53,31 +59,33 @@ export function validateCategoryDescription(description: string | undefined): st
  * @param formData - The form data to validate
  * @returns Validation result with status and errors
  */
-export function validateCategoryForm(formData: CategoryFormData): ValidationResult {
-    const errors: ValidationError[] = [];
+export function validateCategoryForm(
+  formData: CategoryFormData,
+): ValidationResult {
+  const errors: ValidationError[] = [];
 
-    // Validate name
-    const nameError = validateCategoryName(formData.name);
-    if (nameError) {
-        errors.push({
-            field: 'name',
-            message: nameError
-        });
-    }
+  // Validate name
+  const nameError = validateCategoryName(formData.name);
+  if (nameError) {
+    errors.push({
+      field: "name",
+      message: nameError,
+    });
+  }
 
-    // Validate description
-    const descriptionError = validateCategoryDescription(formData.description);
-    if (descriptionError) {
-        errors.push({
-            field: 'description',
-            message: descriptionError
-        });
-    }
+  // Validate description
+  const descriptionError = validateCategoryDescription(formData.description);
+  if (descriptionError) {
+    errors.push({
+      field: "description",
+      message: descriptionError,
+    });
+  }
 
-    return {
-        isValid: errors.length === 0,
-        errors
-    };
+  return {
+    isValid: errors.length === 0,
+    errors,
+  };
 }
 
 /**
@@ -86,9 +94,12 @@ export function validateCategoryForm(formData: CategoryFormData): ValidationResu
  * @param validationResult - The validation result
  * @returns Error message for the field or null if no error
  */
-export function getFieldError(field: string, validationResult: ValidationResult): string | null {
-    const error = validationResult.errors.find(e => e.field === field);
-    return error ? error.message : null;
+export function getFieldError(
+  field: string,
+  validationResult: ValidationResult,
+): string | null {
+  const error = validationResult.errors.find((e) => e.field === field);
+  return error ? error.message : null;
 }
 
 /**
@@ -97,6 +108,9 @@ export function getFieldError(field: string, validationResult: ValidationResult)
  * @param validationResult - The validation result
  * @returns True if field has an error
  */
-export function hasFieldError(field: string, validationResult: ValidationResult): boolean {
-    return validationResult.errors.some(e => e.field === field);
+export function hasFieldError(
+  field: string,
+  validationResult: ValidationResult,
+): boolean {
+  return validationResult.errors.some((e) => e.field === field);
 }

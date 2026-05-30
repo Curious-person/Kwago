@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import { useJournalStore } from '@/lib/store';
-import { Profile } from '@/types';
+import { useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useJournalStore } from "@/lib/store";
+import { Profile } from "@/types";
 
 export default function SessionProvider({
   children,
@@ -18,9 +18,9 @@ export default function SessionProvider({
 
     async function fetchAndSetProfile(userId: string) {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
         .single();
 
       if (error || !data) {

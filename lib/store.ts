@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { Profile, UserRole } from '../types';
+import { create } from "zustand";
+import { Profile, UserRole } from "../types";
 
 // ----------------------------------------------------------------
 // Journal Slice
@@ -33,7 +33,7 @@ type StoreState = JournalSlice & AuthSlice;
 
 export const useJournalStore = create<StoreState>((set, get) => ({
   // --- Journal ---
-  activeCategory: 'All Posts',
+  activeCategory: "All Posts",
   setActiveCategory: (category) => set({ activeCategory: category }),
   isSearchOpen: false,
   toggleSearch: () => set((state) => ({ isSearchOpen: !state.isSearchOpen })),
@@ -56,8 +56,8 @@ export const useJournalStore = create<StoreState>((set, get) => ({
 
   isAuthor: () => {
     const { role } = get();
-    return role === 'author' || role === 'admin';
+    return role === "author" || role === "admin";
   },
 
-  isAdmin: () => get().role === 'admin',
+  isAdmin: () => get().role === "admin",
 }));

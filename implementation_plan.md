@@ -1,4 +1,5 @@
 IMPORTANT: Before doing anything, note these confirmed table names from seed_data.sql:
+
 - Blog posts table is: blog_posts (NOT posts)
 - Products table is: products
 - Profiles table is: profiles
@@ -18,6 +19,7 @@ Supabase queries. Do not change any UI layout, styling, or design — only
 replace the data layer.
 
 The split Supabase client convention is already in place:
+
 - lib/supabase/client.ts — browser client
 - lib/supabase/server.ts — server client (use this for all Server Components)
 - lib/auth.ts — getCurrentUser(), getUserProfile(), requireRole()
@@ -28,6 +30,7 @@ PART A — Author: Posts List
 File: app/dashboard/author/posts/page.tsx
 
 Replace static post data with a real Supabase query:
+
 1. Call requireRole(['author', 'admin']) at the top
 2. Get the current user via getCurrentUser()
 3. Query the blog_posts table:
@@ -48,6 +51,7 @@ PART B — Author: Products List
 File: app/dashboard/author/products/page.tsx
 
 Replace static product data with a real Supabase query:
+
 1. Call requireRole(['author', 'admin']) at the top
 2. Get the current user via getCurrentUser()
 3. Query the products table:
@@ -66,15 +70,16 @@ PART C — Admin: Comments Queue
 File: app/dashboard/admin/comments/page.tsx
 
 Replace static comment data with a real Supabase query:
+
 1. Call requireRole(['admin']) at the top
 2. Query the comments table with a join:
    SELECT
-     comments.id,
-     comments.content,
-     comments.status,
-     comments.created_at,
-     profiles.display_name as author_name,
-     blog_posts.title as post_title
+   comments.id,
+   comments.content,
+   comments.status,
+   comments.created_at,
+   profiles.display_name as author_name,
+   blog_posts.title as post_title
    FROM comments
    LEFT JOIN profiles ON comments.user_id = profiles.id
    LEFT JOIN blog_posts ON comments.post_id = blog_posts.id
@@ -91,17 +96,18 @@ PART D — Admin: Content Moderation Queue
 File: app/dashboard/admin/content/page.tsx
 
 Replace static post data with real Supabase queries:
+
 1. Call requireRole(['admin']) at the top
 2. Fetch ALL posts across all authors with a join:
    SELECT
-     blog_posts.id,
-     blog_posts.title,
-     blog_posts.status,
-     blog_posts.ai_moderation_passed,
-     blog_posts.ai_moderation_reason,
-     blog_posts.submitted_at,
-     blog_posts.admin_review_note,
-     profiles.display_name as author_name
+   blog_posts.id,
+   blog_posts.title,
+   blog_posts.status,
+   blog_posts.ai_moderation_passed,
+   blog_posts.ai_moderation_reason,
+   blog_posts.submitted_at,
+   blog_posts.admin_review_note,
+   profiles.display_name as author_name
    FROM blog_posts
    LEFT JOIN profiles ON blog_posts.author_id = profiles.id
    ORDER BY blog_posts.submitted_at DESC NULLS LAST
@@ -118,6 +124,7 @@ PART E — Admin: Users List
 File: app/dashboard/admin/users/page.tsx
 
 Replace static user data with a real Supabase query:
+
 1. Call requireRole(['admin']) at the top
 2. Query the profiles table:
    SELECT id, email, display_name, role, avatar_url, created_at
@@ -131,7 +138,7 @@ Replace static user data with a real Supabase query:
 5. Create that Server Action in lib/actions/users.ts:
 
    updateUserRole(userId: string, newRole: UserRole):
-     Promise<{ success: boolean, error?: string }>
+   Promise<{ success: boolean, error?: string }>
    - requireRole(['admin']) first
    - Prevent an admin from changing their own role
    - Update profiles set role = newRole where id = userId
@@ -164,6 +171,7 @@ Supabase mutations so dashboard pages stay in sync:
 PART G — Error handling convention
 
 For every Supabase query added in this prompt, follow this pattern:
+
 1. Destructure { data, error } from the Supabase call
 2. If error is not null, log it to console.error and render a simple
    error state in the UI:
@@ -174,6 +182,7 @@ For every Supabase query added in this prompt, follow this pattern:
 ---
 
 Constraints:
+
 - Use the server Supabase client for ALL queries in Server Components
 - Use the browser Supabase client only if a Client Component strictly
   needs to re-fetch after a user interaction
@@ -182,6 +191,7 @@ Constraints:
 - No any types — use the existing types from types/index.ts
 
 After making all changes, show me:
+
 1. Final content of app/dashboard/author/posts/page.tsx
 2. Final content of app/dashboard/author/products/page.tsx
 3. Final content of app/dashboard/admin/comments/page.tsx

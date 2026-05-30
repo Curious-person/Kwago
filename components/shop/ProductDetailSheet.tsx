@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { ChevronRight, ShoppingBag } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+import React from "react";
+import Image from "next/image";
+import { ChevronRight, ShoppingBag } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-} from '@/components/ui/Sheet';
-import { Product } from '@/types/product';
-import { useCollectionActions } from '@/lib/hooks/useCollection';
+} from "@/components/ui/Sheet";
+import { Product } from "@/types/product";
+import { useCollectionActions } from "@/lib/hooks/useCollection";
 
 const DEFAULT_PRODUCT_IMAGE =
-  'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?q=80&w=800&auto=format&fit=crop';
+  "https://images.unsplash.com/photo-1594787318286-3d835c1d207f?q=80&w=800&auto=format&fit=crop";
 
 interface ProductDetailSheetProps {
   product: Product | null;
@@ -52,11 +52,13 @@ export function ProductDetailSheet({
                   >
                     {product.category_names && product.category_names.length > 0
                       ? product.category_names[0]
-                      : 'Uncategorized'}
+                      : "Uncategorized"}
                   </Badge>
                   <ChevronRight size={12} className="text-zinc-300" />
                   <Badge
-                    variant={product.condition === 'New' ? 'default' : 'secondary'}
+                    variant={
+                      product.condition === "New" ? "default" : "secondary"
+                    }
                     className="rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-widest"
                   >
                     {product.condition}
@@ -95,16 +97,19 @@ export function ProductDetailSheet({
                     <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2">
                       Condition
                     </h4>
-                    <p className="text-zinc-900 font-medium">{product.condition}</p>
+                    <p className="text-zinc-900 font-medium">
+                      {product.condition}
+                    </p>
                   </div>
                   <div>
                     <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 mb-2">
                       Categories
                     </h4>
                     <p className="text-zinc-900 font-medium">
-                      {product.category_names && product.category_names.length > 0
-                        ? product.category_names.join(', ')
-                        : 'Uncategorized'}
+                      {product.category_names &&
+                      product.category_names.length > 0
+                        ? product.category_names.join(", ")
+                        : "Uncategorized"}
                     </p>
                   </div>
                 </div>
@@ -115,12 +120,15 @@ export function ProductDetailSheet({
                   </h4>
                   <ul className="space-y-3">
                     {[
-                      'Authentic detailed design',
-                      'Premium materials',
-                      'Collector grade packaging',
-                      'Limited availability',
+                      "Authentic detailed design",
+                      "Premium materials",
+                      "Collector grade packaging",
+                      "Limited availability",
                     ].map((feature, i) => (
-                      <li key={i} className="flex items-center gap-3 text-zinc-600">
+                      <li
+                        key={i}
+                        className="flex items-center gap-3 text-zinc-600"
+                      >
                         <div className="h-1.5 w-1.5 rounded-full bg-[#0066FF]" />
                         <span className="text-sm">{feature}</span>
                       </li>

@@ -9,14 +9,14 @@
  * Represents a product category created and managed by an author
  */
 export interface Category {
-    id: string;                    // UUID
-    name: string;                  // 1-100 characters
-    description?: string;          // Optional, 0-500 characters
-    author_id: string;             // UUID of category owner
-    product_count: number;         // Computed from products table
-    product_images: string[];      // Up to 3 product image URLs
-    created_at: string;            // ISO 8601 timestamp
-    updated_at: string;            // ISO 8601 timestamp
+  id: string; // UUID
+  name: string; // 1-100 characters
+  description?: string; // Optional, 0-500 characters
+  author_id: string; // UUID of category owner
+  product_count: number; // Computed from products table
+  product_images: string[]; // Up to 3 product image URLs
+  created_at: string; // ISO 8601 timestamp
+  updated_at: string; // ISO 8601 timestamp
 }
 
 /**
@@ -24,8 +24,8 @@ export interface Category {
  * Excludes computed fields and timestamps
  */
 export interface CategoryFormData {
-    name: string;
-    description?: string;
+  name: string;
+  description?: string;
 }
 
 /**
@@ -33,10 +33,10 @@ export interface CategoryFormData {
  * Supports success and error notification types
  */
 export interface Notification {
-    type: 'success' | 'error';
-    message: string;
-    duration?: number;             // milliseconds, default 3000 for success
-    id?: string;                   // Unique identifier for notification
+  type: "success" | "error";
+  message: string;
+  duration?: number; // milliseconds, default 3000 for success
+  id?: string; // Unique identifier for notification
 }
 
 /**
@@ -44,11 +44,11 @@ export interface Notification {
  * Tracks which modals are open and what data they contain
  */
 export interface ModalState {
-    isCreateModalOpen: boolean;
-    isEditModalOpen: boolean;
-    isDeleteModalOpen: boolean;
-    editingCategory: Category | null;
-    categoryToDelete: Category | null;
+  isCreateModalOpen: boolean;
+  isEditModalOpen: boolean;
+  isDeleteModalOpen: boolean;
+  editingCategory: Category | null;
+  categoryToDelete: Category | null;
 }
 
 /**
@@ -56,11 +56,11 @@ export interface ModalState {
  * Combines all state needed for the category management interface
  */
 export interface CategoryManagerState {
-    categories: Category[];
-    isLoading: boolean;
-    error: string | null;
-    modals: ModalState;
-    notification: Notification | null;
+  categories: Category[];
+  isLoading: boolean;
+  error: string | null;
+  modals: ModalState;
+  notification: Notification | null;
 }
 
 /**
@@ -68,10 +68,10 @@ export interface CategoryManagerState {
  * Standard response format for all category API endpoints
  */
 export interface CategoryApiResponse {
-    success: boolean;
-    data?: Category | Category[];
-    error?: string;
-    message?: string;
+  success: boolean;
+  data?: Category | Category[];
+  error?: string;
+  message?: string;
 }
 
 /**
@@ -79,8 +79,8 @@ export interface CategoryApiResponse {
  * Used for displaying field-level validation errors
  */
 export interface ValidationError {
-    field: string;
-    message: string;
+  field: string;
+  message: string;
 }
 
 /**
@@ -88,6 +88,6 @@ export interface ValidationError {
  * Contains validation status and any errors
  */
 export interface ValidationResult {
-    isValid: boolean;
-    errors: ValidationError[];
+  isValid: boolean;
+  errors: ValidationError[];
 }

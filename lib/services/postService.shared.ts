@@ -1,16 +1,16 @@
-import type { Post, PostStatus, ContentBlock } from '@/types/post';
+import type { Post, PostStatus, ContentBlock } from "@/types/post";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Error types
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type PostErrorCode =
-  | 'NETWORK_ERROR'
-  | 'AUTH_ERROR'
-  | 'PERMISSION_ERROR'
-  | 'VALIDATION_ERROR'
-  | 'NOT_FOUND_ERROR'
-  | 'UNKNOWN_ERROR';
+  | "NETWORK_ERROR"
+  | "AUTH_ERROR"
+  | "PERMISSION_ERROR"
+  | "VALIDATION_ERROR"
+  | "NOT_FOUND_ERROR"
+  | "UNKNOWN_ERROR";
 
 export interface PostServiceResponse<T> {
   success: boolean;
@@ -50,15 +50,24 @@ export interface BlogPostRow {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function postRowToPost(row: BlogPostRow): Post {
-  const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-  const formattedDate = new Date(row.created_at).toLocaleDateString('en-US', options);
+  const options: Intl.DateTimeFormatOptions = {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  };
+  const formattedDate = new Date(row.created_at).toLocaleDateString(
+    "en-US",
+    options,
+  );
 
-  let authorName = 'Anonymous';
+  let authorName = "Anonymous";
   let authorAvatar =
-    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop';
+    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop";
 
   if (row.profiles) {
-    const profile = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+    const profile = Array.isArray(row.profiles)
+      ? row.profiles[0]
+      : row.profiles;
     if (profile?.display_name) authorName = profile.display_name;
     if (profile?.avatar_url) authorAvatar = profile.avatar_url;
   }
@@ -66,7 +75,7 @@ export function postRowToPost(row: BlogPostRow): Post {
   let blocksList: ContentBlock[] = [];
   if (Array.isArray(row.blocks)) {
     blocksList = row.blocks as ContentBlock[];
-  } else if (typeof row.blocks === 'string') {
+  } else if (typeof row.blocks === "string") {
     try {
       blocksList = JSON.parse(row.blocks) as ContentBlock[];
     } catch {
@@ -93,26 +102,58 @@ export function postRowToPost(row: BlogPostRow): Post {
 // Error classifier
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function classifyPostError(error: unknown): { code: PostErrorCode; message: string } {
-  if (!error) return { code: 'UNKNOWN_ERROR', message: 'An unknown error occurred.' };
+export function classifyPostError(error: unknown): {
+  code: PostErrorCode;
+  message: string;
+} {
+  if (!error)
+    return { code: "UNKNOWN_ERROR", message: "An unknown error occurred." };
 
   const msg = error instanceof Error ? error.message : String(error);
   const lower = msg.toLowerCase();
 
-  if (lower.includes('fetch') || lower.includes('network') || lower.includes('timeout'))
-    return { code: 'NETWORK_ERROR', message: 'Network connection failure. Please check your connection.' };
+  if (
+    lower.includes("fetch") ||
+    lower.includes("network") ||
+    lower.includes("timeout")
+  )
+    return {
+      code: "NETWORK_ERROR",
+      message: "Network connection failure. Please check your connection.",
+    };
 
-  if (lower.includes('permission') || lower.includes('policy') || lower.includes('rls'))
-    return { code: 'PERMISSION_ERROR', message: 'You do not have permission to modify or access this post.' };
+  if (
+    lower.includes("permission") ||
+    lower.includes("policy") ||
+    lower.includes("rls")
+  )
+    return {
+      code: "PERMISSION_ERROR",
+      message: "You do not have permission to modify or access this post.",
+    };
 
-  if (lower.includes('unauthorized') || lower.includes('jwt') || lower.includes('token') || lower.includes('session'))
-    return { code: 'AUTH_ERROR', message: 'Your session has expired. Please log in again.' };
+  if (
+    lower.includes("unauthorized") ||
+    lower.includes("jwt") ||
+    lower.includes("token") ||
+    lower.includes("session")
+  )
+    return {
+      code: "AUTH_ERROR",
+      message: "Your session has expired. Please log in again.",
+    };
 
-  if (lower.includes('not found') || lower.includes('no rows'))
-    return { code: 'NOT_FOUND_ERROR', message: 'The requested blog post was not found.' };
+  if (lower.includes("not found") || lower.includes("no rows"))
+    return {
+      code: "NOT_FOUND_ERROR",
+      message: "The requested blog post was not found.",
+    };
 
-  if (lower.includes('validation') || lower.includes('constraint'))
-    return { code: 'VALIDATION_ERROR', message: 'Validation failed. Please verify your fields.' };
+  if (lower.includes("validation") || lower.includes("constraint"))
+    return {
+      code: "VALIDATION_ERROR",
+      message: "Validation failed. Please verify your fields.",
+    };
 
-  return { code: 'UNKNOWN_ERROR', message: msg };
+  return { code: "UNKNOWN_ERROR", message: msg };
 }

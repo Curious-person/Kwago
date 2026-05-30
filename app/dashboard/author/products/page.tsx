@@ -1,11 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import { MoreHorizontal, Plus, Search, Eye, Edit, Trash2, Loader2, AlertCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import {
+  MoreHorizontal,
+  Plus,
+  Search,
+  Eye,
+  Edit,
+  Trash2,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +23,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -22,16 +31,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 
-import { useRouter } from 'next/navigation';
-import { Product } from '@/types/product';
-import { fetchProducts, deleteProduct } from '@/lib/services/productService';
+import { useRouter } from "next/navigation";
+import { Product } from "@/types/product";
+import { fetchProducts, deleteProduct } from "@/lib/services/productService";
 
 export default function AuthorProductsPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,7 +76,7 @@ export default function AuthorProductsPage() {
   };
 
   const handleAddProduct = () => {
-    router.push('/dashboard/author/products/new');
+    router.push("/dashboard/author/products/new");
   };
 
   const handleDelete = (product: Product) => {
@@ -97,20 +106,31 @@ export default function AuthorProductsPage() {
     setIsDeleting(false);
   };
 
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.category_names?.some(name => name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredProducts = products.filter(
+    (p) =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.category_names?.some((name) =>
+        name.toLowerCase().includes(searchQuery.toLowerCase()),
+      ),
   );
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">My Products</h1>
-          <p className="text-sm text-zinc-500">Manage your collectible listings and inventory.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900">
+            My Products
+          </h1>
+          <p className="text-sm text-zinc-500">
+            Manage your collectible listings and inventory.
+          </p>
         </div>
 
-        <Button className="gap-2" onClick={handleAddProduct} disabled={isLoading}>
+        <Button
+          className="gap-2"
+          onClick={handleAddProduct}
+          disabled={isLoading}
+        >
           <Plus size={16} />
           <span>Add Product</span>
         </Button>
@@ -136,7 +156,9 @@ export default function AuthorProductsPage() {
               <AlertCircle size={20} className="text-red-600" />
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-red-900 mb-1">Failed to load products</h3>
+              <h3 className="text-sm font-semibold text-red-900 mb-1">
+                Failed to load products
+              </h3>
               <p className="text-sm text-red-700 mb-4">{error}</p>
               <Button
                 size="sm"
@@ -184,89 +206,157 @@ export default function AuthorProductsPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-zinc-100 border border-zinc-200 shrink-0">
-                            <Image src={product.image} alt={product.name} fill className="object-cover" />
+                            <Image
+                              src={product.image}
+                              alt={product.name}
+                              fill
+                              className="object-cover"
+                            />
                           </div>
                           <div className="flex flex-col">
-                            <span className="font-bold text-zinc-900">{product.name}</span>
-                            <span className="text-xs text-zinc-400">${product.price.toFixed(2)}</span>
+                            <span className="font-bold text-zinc-900">
+                              {product.name}
+                            </span>
+                            <span className="text-xs text-zinc-400">
+                              ${product.price.toFixed(2)}
+                            </span>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
-                          {product.category_names && product.category_names.length > 0
-                            ? product.category_names.join(', ')
-                            : 'Uncategorized'}
+                        <Badge
+                          variant="secondary"
+                          className="font-medium text-xs rounded-full px-3"
+                        >
+                          {product.category_names &&
+                          product.category_names.length > 0
+                            ? product.category_names.join(", ")
+                            : "Uncategorized"}
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
-                        <Badge variant={product.condition === 'New' ? 'default' : 'outline'} className="font-medium text-xs rounded-full px-3">
+                        <Badge
+                          variant={
+                            product.condition === "New" ? "default" : "outline"
+                          }
+                          className="font-medium text-xs rounded-full px-3"
+                        >
                           {product.condition}
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
-                        {product.status === 'pending_ai' && (
+                        {product.status === "pending_ai" && (
                           <div className="flex items-center gap-1.5">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                            <span className="text-xs font-bold text-amber-600 uppercase tracking-widest">Analyzing...</span>
+                            <span className="text-xs font-bold text-amber-600 uppercase tracking-widest">
+                              Analyzing...
+                            </span>
                           </div>
                         )}
-                        {product.status === 'ai-approved' && (
-                          <Badge variant="outline" className="font-medium text-xs rounded-full px-3 text-blue-600 border-blue-200 bg-blue-50">
+                        {product.status === "ai-approved" && (
+                          <Badge
+                            variant="outline"
+                            className="font-medium text-xs rounded-full px-3 text-blue-600 border-blue-200 bg-blue-50"
+                          >
                             Pending Admin
                           </Badge>
                         )}
-                        {product.status === 'ai-declined' && (
-                          <Badge variant="outline" className="font-medium text-xs rounded-full px-3 text-red-600 border-red-200 bg-red-50">
+                        {product.status === "ai-declined" && (
+                          <Badge
+                            variant="outline"
+                            className="font-medium text-xs rounded-full px-3 text-red-600 border-red-200 bg-red-50"
+                          >
                             AI Flagged
                           </Badge>
                         )}
-                        {product.status === 'for-posting' && (
-                          <Badge variant="default" className="font-medium text-xs rounded-full px-3 bg-green-500 hover:bg-green-600">
+                        {product.status === "for-posting" && (
+                          <Badge
+                            variant="default"
+                            className="font-medium text-xs rounded-full px-3 bg-green-500 hover:bg-green-600"
+                          >
                             Published
                           </Badge>
                         )}
-                        {product.status === 'reject' && (
-                          <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
+                        {product.status === "reject" && (
+                          <Badge
+                            variant="secondary"
+                            className="font-medium text-xs rounded-full px-3"
+                          >
                             Rejected
                           </Badge>
                         )}
-                        {!['pending_ai', 'ai-approved', 'ai-declined', 'for-posting', 'reject'].includes(product.status || '') && (
-                          <Badge variant="secondary" className="font-medium text-xs rounded-full px-3">
-                            {product.status || 'Draft'}
+                        {![
+                          "pending_ai",
+                          "ai-approved",
+                          "ai-declined",
+                          "for-posting",
+                          "reject",
+                        ].includes(product.status || "") && (
+                          <Badge
+                            variant="secondary"
+                            className="font-medium text-xs rounded-full px-3"
+                          >
+                            {product.status || "Draft"}
                           </Badge>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        {product.featured_in_blogs_count && product.featured_in_blogs_count > 0 ? (
-                          <Badge variant="outline" className="font-medium text-xs rounded-full px-3">
-                            {product.featured_in_blogs_count} {product.featured_in_blogs_count === 1 ? 'blog' : 'blogs'}
+                        {product.featured_in_blogs_count &&
+                        product.featured_in_blogs_count > 0 ? (
+                          <Badge
+                            variant="outline"
+                            className="font-medium text-xs rounded-full px-3"
+                          >
+                            {product.featured_in_blogs_count}{" "}
+                            {product.featured_in_blogs_count === 1
+                              ? "blog"
+                              : "blogs"}
                           </Badge>
                         ) : (
-                          <span className="text-xs text-zinc-400">Not featured</span>
+                          <span className="text-xs text-zinc-400">
+                            Not featured
+                          </span>
                         )}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <DropdownMenu>
-                          <DropdownMenuTrigger render={
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-zinc-100" />
-                          }>
-                            <MoreHorizontal size={16} className="text-zinc-400" />
+                          <DropdownMenuTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 rounded-full hover:bg-zinc-100"
+                              />
+                            }
+                          >
+                            <MoreHorizontal
+                              size={16}
+                              className="text-zinc-400"
+                            />
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="rounded-2xl w-48 p-2">
+                          <DropdownMenuContent
+                            align="end"
+                            className="rounded-2xl w-48 p-2"
+                          >
                             <DropdownMenuGroup>
-                              <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">Options</DropdownMenuLabel>
+                              <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                                Options
+                              </DropdownMenuLabel>
                               <DropdownMenuSeparator className="bg-zinc-100" />
                               <DropdownMenuItem className="gap-2 px-3 py-2 rounded-xl cursor-pointer">
                                 <Eye size={14} className="text-zinc-400" />
-                                <span className="font-medium">View Product</span>
+                                <span className="font-medium">
+                                  View Product
+                                </span>
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 className="gap-2 px-3 py-2 rounded-xl cursor-pointer"
                                 onClick={() => handleEdit(product)}
                               >
                                 <Edit size={14} className="text-zinc-400" />
-                                <span className="font-medium">Edit Product</span>
+                                <span className="font-medium">
+                                  Edit Product
+                                </span>
                               </DropdownMenuItem>
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator className="bg-zinc-100" />
@@ -275,7 +365,9 @@ export default function AuthorProductsPage() {
                               onClick={() => handleDelete(product)}
                             >
                               <Trash2 size={14} />
-                              <span className="font-medium">Delete Product</span>
+                              <span className="font-medium">
+                                Delete Product
+                              </span>
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -290,35 +382,43 @@ export default function AuthorProductsPage() {
       )}
 
       {/* Empty State */}
-      {!isLoading && !error && (products.length === 0 || filteredProducts.length === 0) && (
-        <div className="flex flex-col items-center justify-center py-32 text-center">
-          <div className="h-20 w-20 rounded-full bg-zinc-50 flex items-center justify-center mb-6">
-            <Search size={32} className="text-zinc-300" />
+      {!isLoading &&
+        !error &&
+        (products.length === 0 || filteredProducts.length === 0) && (
+          <div className="flex flex-col items-center justify-center py-32 text-center">
+            <div className="h-20 w-20 rounded-full bg-zinc-50 flex items-center justify-center mb-6">
+              <Search size={32} className="text-zinc-300" />
+            </div>
+            <h3 className="text-xl font-bold text-zinc-900 mb-2">
+              {products.length === 0 ? "No products yet" : "No products found"}
+            </h3>
+            <p className="text-zinc-500 max-w-xs">
+              {products.length === 0
+                ? "Get started by adding your first product to your collection."
+                : "Try adjusting your search or add a new product to your collection."}
+            </p>
+            {products.length === 0 && (
+              <Button className="mt-6 gap-2" onClick={handleAddProduct}>
+                <Plus size={16} />
+                <span>Add Your First Product</span>
+              </Button>
+            )}
           </div>
-          <h3 className="text-xl font-bold text-zinc-900 mb-2">
-            {products.length === 0 ? 'No products yet' : 'No products found'}
-          </h3>
-          <p className="text-zinc-500 max-w-xs">
-            {products.length === 0
-              ? 'Get started by adding your first product to your collection.'
-              : 'Try adjusting your search or add a new product to your collection.'}
-          </p>
-          {products.length === 0 && (
-            <Button className="mt-6 gap-2" onClick={handleAddProduct}>
-              <Plus size={16} />
-              <span>Add Your First Product</span>
-            </Button>
-          )}
-        </div>
-      )}
+        )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md rounded-3xl p-8 border-zinc-100 shadow-none">
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-zinc-900">Delete Product</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-zinc-900">
+              Delete Product
+            </DialogTitle>
             <DialogDescription className="text-sm text-zinc-500 mt-2 leading-relaxed">
-              Are you sure you want to delete <span className="font-semibold text-zinc-900">"{productToDelete?.name}"</span>? This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-zinc-900">
+                "{productToDelete?.name}"
+              </span>
+              ? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
@@ -351,7 +451,7 @@ export default function AuthorProductsPage() {
                   Deleting...
                 </>
               ) : (
-                'Delete'
+                "Delete"
               )}
             </Button>
           </DialogFooter>

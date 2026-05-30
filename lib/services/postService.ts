@@ -8,35 +8,39 @@
  *   import { ... } from '@/lib/services/postService.server';
  */
 
-import { createClient } from '@/lib/supabase/client';
-import type { Post, ContentBlock } from '@/types/post';
+import { createClient } from "@/lib/supabase/client";
+import type { Post, ContentBlock } from "@/types/post";
 import {
   type PostServiceResponse,
   type BlogPostRow,
   postRowToPost,
   classifyPostError,
-} from './postService.shared';
+} from "./postService.shared";
 
 // Re-export everything consumers need from one place.
-export type { PostErrorCode, PostServiceResponse, BlogPostRow } from './postService.shared';
-export { postRowToPost, classifyPostError } from './postService.shared';
+export type {
+  PostErrorCode,
+  PostServiceResponse,
+  BlogPostRow,
+} from "./postService.shared";
+export { postRowToPost, classifyPostError } from "./postService.shared";
 
 /**
  * Creates a new blog post. Must be called from a Client Component or browser context.
  */
 export async function createPost(
-  input: Omit<Post, 'id' | 'date' | 'author' | 'authorImage'>,
-  userId: string
+  input: Omit<Post, "id" | "date" | "author" | "authorImage">,
+  userId: string,
 ): Promise<PostServiceResponse<Post>> {
   try {
     const supabase = createClient();
     const slug = input.title
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
 
     const { data, error } = await supabase
-      .from('blog_posts')
+      .from("blog_posts")
       .insert({
         title: input.title,
         slug,
@@ -47,7 +51,7 @@ export async function createPost(
         blocks: input.blocks,
         author_id: userId,
       })
-      .select('*, profiles:author_id(display_name, avatar_url)')
+      .select("*, profiles:author_id(display_name, avatar_url)")
       .single();
 
     if (error) throw error;
@@ -63,7 +67,7 @@ export async function createPost(
  */
 export async function updatePost(
   id: string,
-  input: Partial<Omit<Post, 'id' | 'date' | 'author' | 'authorImage'>>
+  input: Partial<Omit<Post, "id" | "date" | "author" | "authorImage">>,
 ): Promise<PostServiceResponse<Post>> {
   try {
     const supabase = createClient();
@@ -82,8 +86,8 @@ export async function updatePost(
       updatePayload.title = input.title;
       updatePayload.slug = input.title
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)/g, '');
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
     }
     if (input.category) updatePayload.category = input.category;
     if (input.image) updatePayload.image = input.image;
@@ -92,10 +96,10 @@ export async function updatePost(
     if (input.blocks) updatePayload.blocks = input.blocks;
 
     const { data, error } = await supabase
-      .from('blog_posts')
+      .from("blog_posts")
       .update(updatePayload)
-      .eq('id', id)
-      .select('*, profiles:author_id(display_name, avatar_url)')
+      .eq("id", id)
+      .select("*, profiles:author_id(display_name, avatar_url)")
       .single();
 
     if (error) throw error;
@@ -109,10 +113,12 @@ export async function updatePost(
 /**
  * Deletes a blog post. Must be called from a Client Component or browser context.
  */
-export async function deletePost(id: string): Promise<PostServiceResponse<void>> {
+export async function deletePost(
+  id: string,
+): Promise<PostServiceResponse<void>> {
   try {
     const supabase = createClient();
-    const { error } = await supabase.from('blog_posts').delete().eq('id', id);
+    const { error } = await supabase.from("blog_posts").delete().eq("id", id);
 
     if (error) throw error;
 
@@ -134,27 +140,30 @@ export async function deletePost(id: string): Promise<PostServiceResponse<void>>
  */
 export async function adminReviewPost(
   id: string,
-  action: 'approve' | 'reject',
-  remarks?: string
+  action: "approve" | "reject",
+  remarks?: string,
 ): Promise<PostServiceResponse<Post>> {
   try {
-    console.log(`[adminReviewPost] Admin reviewing post ${id} with action: ${action}`);
+    console.log(
+      `[adminReviewPost] Admin reviewing post ${id} with action: ${action}`,
+    );
 
-    const newStatus = action === 'approve' ? 'Published' : 'Rejected';
+    const newStatus = action === "approve" ? "Published" : "Rejected";
     const supabase = createClient();
 
     const { data, error } = await supabase
-      .from('blog_posts')
+      .from("blog_posts")
       .update({
         status: newStatus,
-        rejection_remarks: action === 'reject' ? (remarks?.trim() ?? null) : null,
+        rejection_remarks:
+          action === "reject" ? (remarks?.trim() ?? null) : null,
       })
-      .eq('id', id)
-      .select('*, profiles:author_id(display_name, avatar_url)')
+      .eq("id", id)
+      .select("*, profiles:author_id(display_name, avatar_url)")
       .single();
 
     if (error) {
-      console.error('[adminReviewPost] Supabase error:', error);
+      console.error("[adminReviewPost] Supabase error:", error);
       return {
         success: false,
         error: classifyPostError(error),
@@ -165,21 +174,19 @@ export async function adminReviewPost(
       return {
         success: false,
         error: {
-          code: 'UNKNOWN_ERROR',
-          message: 'Failed to update post status or insufficient permissions',
+          code: "UNKNOWN_ERROR",
+          message: "Failed to update post status or insufficient permissions",
         },
       };
     }
 
-    console.log('[adminReviewPost] Post review successful');
+    console.log("[adminReviewPost] Post review successful");
     return { success: true, data: postRowToPost(data as BlogPostRow) };
   } catch (err) {
-    console.error('[adminReviewPost] Unexpected error:', err);
+    console.error("[adminReviewPost] Unexpected error:", err);
     return {
       success: false,
       error: classifyPostError(err),
     };
   }
 }
-
-

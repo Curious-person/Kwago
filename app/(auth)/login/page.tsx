@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/Button";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,38 +31,38 @@ export default function LoginPage() {
     }
 
     // Fetch the user's profile to determine role-based redirect
-    const { data: { user } } = await supabase.auth.getUser();
-    let destination = '/';
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    let destination = "/";
 
     if (user) {
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
         .single();
 
-      if (profile?.role === 'admin') {
-        destination = '/dashboard/admin';
-      } else if (profile?.role === 'author') {
-        destination = '/dashboard/author/posts';
+      if (profile?.role === "admin") {
+        destination = "/dashboard/admin";
+      } else if (profile?.role === "author") {
+        destination = "/dashboard/author/posts";
       } else {
         // member or unknown → home
-        destination = '/';
+        destination = "/";
       }
     }
 
     // Allow explicit ?next= param to override (e.g. deep-linked pages)
     const params = new URLSearchParams(window.location.search);
-    const next = params.get('next');
-    if (next && next.startsWith('/') && !next.startsWith('/dashboard')) {
+    const next = params.get("next");
+    if (next && next.startsWith("/") && !next.startsWith("/dashboard")) {
       destination = next;
     }
 
     // Use hard redirect for auth transitions to ensure clean state and correct RBAC hydration
     window.location.href = destination;
   }
-
-
 
   return (
     <div className="w-full max-w-md">
@@ -146,13 +146,13 @@ export default function LoginPage() {
           size="lg"
           className="mt-2 w-full"
         >
-          {loading ? 'Signing in…' : 'Sign in'}
+          {loading ? "Signing in…" : "Sign in"}
         </Button>
       </form>
 
       {/* Footer link */}
       <p className="mt-8 text-center text-sm text-zinc-500">
-        Don&apos;t have an account?{' '}
+        Don&apos;t have an account?{" "}
         <Link
           href="/register"
           className="font-medium text-[#0066FF] hover:underline"

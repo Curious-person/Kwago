@@ -1,9 +1,9 @@
-import Link from 'next/link';
-import type { Metadata } from 'next';
+import Link from "next/link";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'Access Denied',
-  description: 'You do not have permission to view this page.',
+  title: "Access Denied",
+  description: "You do not have permission to view this page.",
   robots: { index: false, follow: false },
 };
 

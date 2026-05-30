@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { ArrowRight } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Product } from '@/types/product';
+import React from "react";
+import Image from "next/image";
+import { ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Product } from "@/types/product";
 
 const DEFAULT_PRODUCT_IMAGE =
-  'https://images.unsplash.com/photo-1594787318286-3d835c1d207f?q=80&w=800&auto=format&fit=crop';
+  "https://images.unsplash.com/photo-1594787318286-3d835c1d207f?q=80&w=800&auto=format&fit=crop";
 
 interface RelatedProductCardProps {
   product: Product;
@@ -26,11 +26,14 @@ interface RelatedProductCardProps {
  *  - Shows only the first category
  *  - CTA is "Shop Now →" (ghost style)
  */
-export function RelatedProductCard({ product, onViewDetails }: RelatedProductCardProps) {
+export function RelatedProductCard({
+  product,
+  onViewDetails,
+}: RelatedProductCardProps) {
   const primaryCategory =
     product.category_names && product.category_names.length > 0
       ? product.category_names[0]
-      : 'Uncategorized';
+      : "Uncategorized";
 
   return (
     <div
@@ -39,7 +42,7 @@ export function RelatedProductCard({ product, onViewDetails }: RelatedProductCar
       role="button"
       tabIndex={0}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onViewDetails(product);
+        if (e.key === "Enter" || e.key === " ") onViewDetails(product);
       }}
       aria-label={`View details for ${product.name}`}
     >
@@ -53,7 +56,7 @@ export function RelatedProductCard({ product, onViewDetails }: RelatedProductCar
         />
         <div className="absolute top-3 left-3">
           <Badge
-            variant={product.condition === 'New' ? 'default' : 'secondary'}
+            variant={product.condition === "New" ? "default" : "secondary"}
             className="rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider"
           >
             {product.condition}
@@ -83,7 +86,10 @@ export function RelatedProductCard({ product, onViewDetails }: RelatedProductCar
             }}
           >
             Shop Now
-            <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight
+              size={14}
+              className="transition-transform group-hover:translate-x-0.5"
+            />
           </Button>
         </div>
       </div>
