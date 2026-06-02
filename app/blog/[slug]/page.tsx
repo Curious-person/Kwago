@@ -17,6 +17,7 @@ import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { SmoothScroll } from "@/components/ui/SmoothScroll";
 import { RelatedProductsShelf } from "@/components/blog/RelatedProductsShelf";
 import InteractiveArticle from "@/components/blog/InteractiveArticle";
+import { ShareButtons } from "@/components/blog/ShareButtons";
 
 export default async function BlogPost({
   params,
@@ -70,24 +71,7 @@ export default async function BlogPost({
           {/* Action Footer */}
           <div className="max-w-2xl mx-auto">
             <ScrollReveal>
-              <div className="mt-20 pt-10 border-t border-zinc-100 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                    Share this
-                  </span>
-                  <div className="flex gap-2">
-                    <Badge variant="secondary" className="px-4 py-2">
-                      Twitter
-                    </Badge>
-                    <Badge variant="secondary" className="px-4 py-2">
-                      LinkedIn
-                    </Badge>
-                  </div>
-                </div>
-                <Button variant="ghost" size="sm" className="text-zinc-400">
-                  <Share2 size={16} />
-                </Button>
-              </div>
+              <ShareButtons title={post.title} />
             </ScrollReveal>
           </div>
 

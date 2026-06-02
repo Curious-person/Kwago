@@ -29,6 +29,7 @@
     "react-dom": "19.2.4",
     "react-hook-form": "^7.76.1",
     "react-i18next": "^17.0.8",
+    "react-share": "^5.3.0",
     "react-text-to-speech": "^5.1.10",
     "shadcn": "^4.5.0",
     "tailwind-merge": "^3.5.0",

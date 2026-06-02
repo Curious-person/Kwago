@@ -6,6 +6,7 @@ import { Newsletter } from "@/components/layout/Newsletter";
 import { HeroPost } from "@/components/blog/HeroPost";
 import { CategoryFilter } from "@/components/blog/CategoryFilter";
 import { PostCard } from "@/components/blog/PostCard";
+import { AuthTestModal } from "@/components/layout/AuthTestModal";
 import { Button } from "@/components/ui/Button";
 import { getUserRole } from "@/lib/auth";
 import { fetchPublishedPosts } from "@/lib/services/postService.server";
@@ -46,6 +47,10 @@ export default async function Home() {
         <Navbar />
 
         <main className="flex-1 max-w-7xl mx-auto w-full pb-20">
+          <div className="flex justify-center pt-8 pb-4">
+            <AuthTestModal />
+          </div>
+
           {/* Hero Section */}
           {heroPost && (
             <ScrollReveal>
