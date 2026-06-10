@@ -47,9 +47,7 @@ export default async function Home() {
         <Navbar />
 
         <main className="flex-1 max-w-7xl mx-auto w-full pb-20">
-          <div className="flex justify-center pt-8 pb-4">
-            <AuthTestModal />
-          </div>
+          <AuthTestModal />
 
           {/* Hero Section */}
           {heroPost && (

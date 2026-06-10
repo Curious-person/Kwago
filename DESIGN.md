@@ -84,4 +84,4 @@ The primary featured article component with a split layout.
 - **Styling**: Tailwind CSS
 - **Icons**: Lucide React
 - **Images**: Next.js `next/image` for optimized loading and layout stability.
-- **Responsive Design**: Mobile-first grid layouts (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`).
+- **Responsive Design**: All components and pages MUST be strictly mobile-responsive. Follow a mobile-first approach for all styling (designing for mobile base classes first, then scaling up with Tailwind's `sm:`, `md:`, `lg:` prefixes).

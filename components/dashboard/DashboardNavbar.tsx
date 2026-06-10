@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
@@ -43,9 +43,20 @@ export function DashboardNavbar({ profile }: DashboardNavbarProps) {
         .toUpperCase()
     : "U";
 
+  const { isMobileSidebarOpen, setMobileSidebarOpen } = useJournalStore();
+
   return (
     <nav className="flex items-center justify-between px-8 py-4 bg-white border-b border-zinc-200 sticky top-0 z-50">
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setMobileSidebarOpen(!isMobileSidebarOpen)}
+          className="md:hidden p-2 -ml-2 rounded-full text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+          aria-label={isMobileSidebarOpen ? "Close sidebar" : "Open sidebar"}
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
         <Link
           href="/"
           className="text-xl font-bold tracking-tight text-zinc-900 hover:text-[#0066FF] transition-colors"

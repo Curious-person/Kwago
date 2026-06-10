@@ -17,6 +17,38 @@ Kwago is a clean, high-performance platform combining a content-first blog for c
 - **Blog Posts**: Educational and community content for collectors (e.g., authenticity guides, maintenance).
 - **Products**: High-end collectibles (Marvel Legends, Weta Workshop statues), supporting both 'New' and 'Used' conditions.
 
+## AI Content Moderation & Reviews (Proposed)
+
+> [!NOTE]
+> The AI review feature is **currently not implemented**.
+
+If implemented with a real API (e.g., Google Gemini API, OpenAI API, or a dedicated moderation endpoint), it will be used to automatically perform safety, quality, and categorization checks on blog posts and product submissions before they are shown to the administrator for final approval.
+
+### Intended Flow & Integration Points
+
+When a user submits a blog post or lists a new product:
+1. **Submission**: The user submits the entry via a Next.js Server Action or API endpoint.
+2. **AI Review Trigger**: The backend triggers an asynchronous AI evaluation call using the submission's text and metadata.
+3. **Moderation Status**:
+   - The submission is marked as `status: "pending_review"`.
+   - The AI results (relevance score, flags for inappropriate content, category verification, suggested tags) are stored in an `ai_reviews` table linked to the post or product.
+4. **Admin Dashboard**:
+   - The post or product appears in the Admin Dashboard along with the AI review report (e.g., confidence scores, flagged issues).
+   - The administrator uses this AI analysis to streamline the final manual approval/rejection step.
+
+### Structural Flow
+
+```mermaid
+graph TD
+    User([Collector / Author]) -->|Submit Post / Product| Route[Server Action / API Route]
+    Route -->|1. Store Draft| DB[(Supabase DB)]
+    Route -->|2. Request Analysis| AI[AI Review API]
+    AI -->|3. Return Safety & Quality Flags| Route
+    Route -->|4. Save AI Flags & Feedback| DB
+    DB -->|5. Load Pending items + AI flags| AdminDashboard[Admin Dashboard]
+    Admin([Administrator]) -->|6. Approve / Reject| AdminDashboard
+```
+
 ## Design Philosophy ("Clarity over Complexity")
 
 - **Typography**: Inter/Geist font family.
@@ -27,16 +59,24 @@ Kwago is a clean, high-performance platform combining a content-first blog for c
 
 ## Project Structure
 
-- `app/`: Next.js App Router pages and layouts.
+- `app/`: Next.js App Router pages and layouts (e.g., `(auth)`, `blog`, `shop`, `dashboard`).
 - `components/`:
   - `ui/`: Atomic components (Button, Input, Badge).
-  - `layout/`: Structural components (Navbar, Footer, Newsletter).
-  - `blog/`: Domain components (PostCard, HeroPost, CategoryFilter).
+  - `layout/`: Structural components (Navbar, Footer, Modals).
+  - `blog/`: Domain components for the journal (PostCard, HeroPost).
+  - `shop/`: Domain components for the shop (ProductCard, ProductGrid).
+  - `auth/`: Authentication-related components.
+  - `dashboard/`: Admin and author dashboard components.
+  - `providers/`: Context providers.
 - `lib/`:
-  - `supabase.ts`: Supabase client configuration.
+  - `supabase/`: Supabase client configuration and SSR utilities.
   - `store.ts`: Zustand store for global application state.
-  - `utils.ts`: Utility functions.
-- `types/`: TypeScript interfaces and definitions.
+  - `utils/`, `utils.ts`: Utility functions.
+  - `services/`: Business logic and external API integrations.
+  - `hooks/`: Custom React hooks.
+  - `data/`: Data fetching utilities.
+  - `auth.ts`, `i18n.ts`: Auth and internationalization helpers.
+- `types/`: TypeScript interfaces and definitions (`index.ts`, `post.ts`, `product.ts`, `sales.ts`).
 
 ## Key Commands
 

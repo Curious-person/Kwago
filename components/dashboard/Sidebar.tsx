@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import {
   LayoutGrid,
   FileText,
@@ -16,6 +17,7 @@ import {
 import { SidebarLink } from "./SidebarLink";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/Button";
+import { useJournalStore } from "@/lib/store";
 
 interface SidebarProps {
   isAdmin: boolean;
@@ -25,14 +27,31 @@ interface SidebarProps {
 
 export const Sidebar = ({ isAdmin, isAuthor, role }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { isMobileSidebarOpen, setMobileSidebarOpen } = useJournalStore();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname, setMobileSidebarOpen]);
 
   return (
-    <aside
-      className={cn(
-        "sticky top-[73px] h-[calc(100vh-73px)] shrink-0 border-r border-zinc-200 flex flex-col pt-8 pb-6 px-4 transition-all duration-300 overflow-y-auto",
-        isCollapsed ? "w-20 px-2" : "w-56",
+    <>
+      {/* Mobile Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-zinc-900/40 z-40 md:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
       )}
-    >
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 bg-white border-r border-zinc-200 flex flex-col pt-8 pb-6 px-4 transition-all duration-300 overflow-y-auto",
+          "md:sticky md:top-[73px] md:h-[calc(100vh-73px)] md:z-auto",
+          isMobileSidebarOpen ? "translate-x-0 w-56" : "-translate-x-full md:translate-x-0",
+          isCollapsed ? "md:w-20 md:px-2" : "md:w-56",
+        )}
+      >
       {/* Role badge */}
       <div
         className={cn(
@@ -128,7 +147,7 @@ export const Sidebar = ({ isAdmin, isAuthor, role }: SidebarProps) => {
       </nav>
 
       {/* Collapse Toggle */}
-      <div className="mt-auto pt-4 border-t border-zinc-100 flex justify-center">
+      <div className="mt-auto pt-4 border-t border-zinc-100 hidden md:flex justify-center">
         <Button
           variant="outline"
           size="icon"
@@ -140,5 +159,6 @@ export const Sidebar = ({ isAdmin, isAuthor, role }: SidebarProps) => {
         </Button>
       </div>
     </aside>
-  );
+  </>
+);
 };

@@ -10,6 +10,8 @@ interface JournalSlice {
   setActiveCategory: (category: string) => void;
   isSearchOpen: boolean;
   toggleSearch: () => void;
+  isMobileSidebarOpen: boolean;
+  setMobileSidebarOpen: (open: boolean) => void;
 }
 
 // ----------------------------------------------------------------
@@ -19,6 +21,7 @@ interface JournalSlice {
 interface AuthSlice {
   profile: Profile | null;
   role: UserRole | null;
+  isAuthLoaded: boolean;
   setProfile: (profile: Profile | null) => void;
   clearAuth: () => void;
   isAuthor: () => boolean;
@@ -37,21 +40,26 @@ export const useJournalStore = create<StoreState>((set, get) => ({
   setActiveCategory: (category) => set({ activeCategory: category }),
   isSearchOpen: false,
   toggleSearch: () => set((state) => ({ isSearchOpen: !state.isSearchOpen })),
+  isMobileSidebarOpen: false,
+  setMobileSidebarOpen: (open) => set({ isMobileSidebarOpen: open }),
 
   // --- Auth ---
   profile: null,
   role: null,
+  isAuthLoaded: false,
 
   setProfile: (profile) =>
     set({
       profile,
       role: profile?.role ?? null,
+      isAuthLoaded: true,
     }),
 
   clearAuth: () =>
     set({
       profile: null,
       role: null,
+      isAuthLoaded: true,
     }),
 
   isAuthor: () => {
